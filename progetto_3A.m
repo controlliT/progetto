@@ -31,18 +31,18 @@ tab_x_equilibrio_2 = 6;
 tab_x_equilibrio_3 = 6;
 tab_u_equilibrio = (tab_x_equilibrio_1/(tab_x_equilibrio_2*abs(tab_x_equilibrio_2))-tab_R_0)/(tab_C_d);
 
-%La costante g non è presente nella tabella:
+%La costante g non Ã¨ presente nella tabella:
 tab_g_const = 9.80655;
 
 %Definizione del sistema:
-%Il sistema è formato da tre variabili di stato:
+%Il sistema Ã¨ formato da tre variabili di stato:
 
-%x_1: la pressione dell’acqua sul fondo del bacino.
+%x_1: la pressione dellâ€™acqua sul fondo del bacino.
 %x_2: la portata in uscita dal bacino.
 %x_3: la portata in ingresso allo stesso.
 
 %L'uscita del sistema viene rappresentata dalla variabile y:
-%y: rappresenta l’energia elettrica generata attraverso la turbina.
+%y: rappresenta lâ€™energia elettrica generata attraverso la turbina.
 %y=?eta*x_1*x_2
 
 %Forma di stato:
@@ -52,6 +52,10 @@ tab_g_const = 9.80655;
  
 %%Specifiche di progetto
 
+%1 Errore a regime nullo con riferimento a gradino w(t) = W1(t)
+%2 Per garantire una certa robustezza del sistema si deve avere un margine di fase M_f = 45Â°
+%3 Il sistema pu`o accettare un sovraelongazione percentuale al massimo dellâ€™5% : S_% <= 5%
+%4 Il tempo di assestamento allâ€™ h% pu`o essere tenuto relativamente basso T_a_h_perc = T_a[s]
 
 %%Linearizzazione del sistema
 
@@ -60,8 +64,8 @@ tab_g_const = 9.80655;
 %x_dot_2 = x_1 -(R_0*|x_2|) x_2 - (C_d*x_2*|x_2|) u
 
 %Ridefinisco y
-%y= ?(eta*x_2) x_1
-%y= ?(eta*x_1) x_2
+%y= -(eta*x_2) x_1
+%y= -(eta*x_1) x_2
 
 %Punto di equilibrio dove linearizzare il sistema:
 %x_equilibrio = (10,6,6)
