@@ -32,21 +32,21 @@ tab_x_equilibrio_2 = 6;
 tab_x_equilibrio_3 = 6;
 tab_u_equilibrio = (tab_x_equilibrio_1/(tab_x_equilibrio_2*abs(tab_x_equilibrio_2))-tab_R_0)/(tab_C_d);
 
-%La costante g non è presente nella tabella:
+%La costante g non ï¿½ presente nella tabella:
 tab_g_const = 9.80655;
 
 %Metto insieme la condizione di equilibrio dello stato:
 tab_x_equilibrio = [tab_x_equilibrio_1, tab_x_equilibrio_2, tab_x_equilibrio_3];
 
 %Definizione del sistema:
-%Il sistema è formato da tre variabili di stato:
+%Il sistema ï¿½ formato da tre variabili di stato:
 
-%x_1: la pressione dell'acqua sul fondo del bacino.
+%x_1: la pressione dellï¿½acqua sul fondo del bacino.
 %x_2: la portata in uscita dal bacino.
 %x_3: la portata in ingresso allo stesso.
 
 %L'uscita del sistema viene rappresentata dalla variabile y:
-%y: rappresenta l'energia elettrica generata attraverso la turbina.
+%y: rappresenta lï¿½energia elettrica generata attraverso la turbina.
 %y= -eta*x_1*x_2
 
 %Forma di stato:
@@ -57,33 +57,9 @@ tab_x_equilibrio = [tab_x_equilibrio_1, tab_x_equilibrio_2, tab_x_equilibrio_3];
 %%Specifiche di progetto
 
 %1 Errore a regime nullo con riferimento a gradino w(t) = W1(t)
-%2 Per garantire una certa robustezza del sistema si deve avere un margine di fase M_f* = 45°
-%3 Il sistema può accettare un sovraelongazione percentuale al massimo del 5% : S_% <= 5%
-
-s_perc = 0.05;
-
-%4 Il tempo di assestamento all'1% deve essere tenuto relativamente basso T_a_1 = 0.3 s
-%5 Devo abbattere i rumori n di 30 volte che in db =
-B_n_db = 20*log(tab_B_n);
-
-%Specifiche opzionali:
-
-%1_opz Il tempo di assestamento all'1% deve essere tenuto a 0.033 s
-
-%Introduco i vincoli indiretti:
-
-%Dato dal rumore di misura.
-w_c_max=tab_omega_n; % 1000 rad/s
-
-%Viene ricavato dalla sovraelongazione con la formula classica.
-xi=sqrt(log(s_perc)^2/(pi^2+log(s_perc)^2));
-
-%Mf>69.011° richiesta più limitatnte delle specifiche (Mf>45°),
-Mf=xi*100;
-
-%Calcolo la frequenza di attraversamento minimo attraverso la formula:
-%460/(Mf* T*) cioè 460/(69.011 * 0.3)
-w_c_min=460/(Mf * tab_T_a_h_perc); % 22.2188 rad/s
+%2 Per garantire una certa robustezza del sistema si deve avere un margine di fase M_f = 45ï¿½
+%3 Il sistema puï¿½ accettare un sovraelongazione percentuale al massimo dellï¿½5% : S_% <= 5%
+%4 Il tempo di assestamento allï¿½h_perc puï¿½ essere tenuto relativamente basso T_a_h_perc = T_a[s]
 
 %%Linearizzazione del sistema
 
@@ -94,7 +70,7 @@ w_c_min=460/(Mf * tab_T_a_h_perc); % 22.2188 rad/s
 %x_dot_2 = x_1 -(C_d*u+R_0) x_2*|x_2|
 %x_dot_2 = x_1 -(R_0*|x_2|) x_2 - (C_d*x_2*|x_2|) u
 
-%La derivata di x_2 in x_dot_2 non è immediata:
+%La derivata di x_2 in x_dot_2 non ï¿½ immediata:
 %d/dx_2 (x_1 -(C_d*u+R_0) x_2*|x_2|) = -(2(x_2)^2(C_d*u+R_0))/|x_2|
 
 %Ridefinisco y
@@ -114,19 +90,14 @@ w_c_min=460/(Mf * tab_T_a_h_perc); % 22.2188 rad/s
 
 %Definiamo le matrici A,B,C,D derivabili dalla forma di stato e dall'uscita
 
-%A è una 3x3 perchè devo moltiplicare per le tre equazioni di stato 3x1 e 
-%deve saltare fuori un 3x1 quindi 3x3 * 3x1 = 3x1
 A = [0, -(tab_g_const/tab_a),                                                                   (tab_g_const/tab_a);
      1, -(2*(tab_x_equilibrio_2^2)*(tab_C_d*tab_u_equilibrio+tab_R_0)/abs(tab_x_equilibrio_2)), 0;
      0, 0,                                                                                      0];
-
-%B è una 3x1 perchè deve moltiplicare per l'ingresso 1x1 e deve saltare
-%fuori una 3x1 quindi 3x1 * 1x1 = 3x1
+ 
 B = [0;
      -(tab_C_d*tab_x_equilibrio_2*abs(tab_x_equilibrio_2));
      0];
 
-%C è 1x3 perchè 1x3 * 3x1 = 1x1
 C = [-(tab_eta*tab_x_equilibrio_2), -(tab_eta*tab_x_equilibrio_1),0];
 
 D = 0;
@@ -135,76 +106,36 @@ D = 0;
 s=tf('s');
 [Num,Den]=ss2tf(A,B,C,D);
 G=tf(Num,Den);
-%Stampo G
+%Stampa la forma canonica di bode.
 zpk(G)
 
 %Si evidenzia uno zero che diverge.
-%Si evidenzia uno zero nell'origine e un polo nell'origine.
-%Si evidenzia due poli non nell'origine.
+
 
 %Plot del diagramma di bode
-
-%Margini di visualizzazione del diagramma.
 w_plot_min=10^(-2);
 w_plot_max=10^5;
 
-%Ricavo il bode della G da plottare
 [Mag,phase,w]=bode(G,{w_plot_min,w_plot_max});
-
-
-%Nuova finestra grafica
-figure();
-
-%Vincolo sulla w_c_min
-patch([w_plot_min,w_c_min,w_c_min,w_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
-grid on;
-
-%Vincolo sulla w_c_max
-patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[120,120,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
-grid on;
-
-%Vincolo sull'attenuazione di n
-patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
-grid on;
-
-%plotto G
-hold on;
+figure()
 margin(Mag,phase,w);
 grid on;
 
-%Vincolo sul margine di fase: -180° + arg(L(jw_c))
+%Chiudo l'anello senza R(s) in modo da verificare cosa succede.
+F=G/(1+G);
+zpk(F)
 hold on;
-%Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -270),
-%(w_c_min, -270)
-patch([w_c_min,w_c_max,w_c_max,w_c_min],[-180+Mf,-180+Mf,-270,-270],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
-grid on;
+margin(F);
+figure();
+step(F);
 
-
-%%Progettazione della rete regolatrice statica
-
-%Ho bisogno di un polo per il vincolo numero 1.
-%Il guadagno statico resta libero: verrà modificato se necessario.
 R_s = 1/s;
 G_e = R_s*G;
 
-%Stampo G_e
 zpk(G_e)
 
-[Mag_e,phase_e,w_e]=bode(G_e,{w_plot_min,w_plot_max});
-hold on;
-margin(Mag_e,phase_e,w_e);
+[Mag,phase,w]=bode(G_e,{w_plot_min,w_plot_max});
+figure()
+margin(Mag,phase,w);
 grid on;
 
-%%Progettazione della rete regolatrice dinamica
-alpha = 0.2;
-tau = 10;
-R_d = (1+(s/tau))/(1+alpha*(s/tau));
-L = R_d*G_e;
-
-%Stampo L
-zpk(L)
-
-[Mag_l,phase_l,w_l]=bode(L,{w_plot_min,w_plot_max});
-hold on;
-margin(Mag_l,phase_l,w_l);
-grid on;

@@ -32,14 +32,14 @@ tab_x_equilibrio_2 = 6;
 tab_x_equilibrio_3 = 6;
 tab_u_equilibrio = (tab_x_equilibrio_1/(tab_x_equilibrio_2*abs(tab_x_equilibrio_2))-tab_R_0)/(tab_C_d);
 
-%La costante g non è presente nella tabella:
+%La costante g non Ã¨ presente nella tabella:
 tab_g_const = 9.80655;
 
 %Metto insieme la condizione di equilibrio dello stato:
 tab_x_equilibrio = [tab_x_equilibrio_1, tab_x_equilibrio_2, tab_x_equilibrio_3];
 
 %Definizione del sistema:
-%Il sistema è formato da tre variabili di stato:
+%Il sistema Ã¨ formato da tre variabili di stato:
 
 %x_1: la pressione dell'acqua sul fondo del bacino.
 %x_2: la portata in uscita dal bacino.
@@ -57,8 +57,8 @@ tab_x_equilibrio = [tab_x_equilibrio_1, tab_x_equilibrio_2, tab_x_equilibrio_3];
 %%Specifiche di progetto
 
 %1 Errore a regime nullo con riferimento a gradino w(t) = W1(t)
-%2 Per garantire una certa robustezza del sistema si deve avere un margine di fase M_f* = 45°
-%3 Il sistema può accettare un sovraelongazione percentuale al massimo del 5% : S_% <= 5%
+%2 Per garantire una certa robustezza del sistema si deve avere un margine di fase M_f* = 45Â°
+%3 Il sistema puÃ² accettare un sovraelongazione percentuale al massimo del 5% : S_% <= 5%
 
 s_perc = 0.05;
 
@@ -78,11 +78,11 @@ w_c_max=tab_omega_n; % 1000 rad/s
 %Viene ricavato dalla sovraelongazione con la formula classica.
 xi=sqrt(log(s_perc)^2/(pi^2+log(s_perc)^2));
 
-%Mf>69.011° richiesta più limitatnte delle specifiche (Mf>45°),
+%Mf>69.011Â° richiesta piÃ¹ limitatnte delle specifiche (Mf>45Â°),
 Mf=xi*100;
 
 %Calcolo la frequenza di attraversamento minimo attraverso la formula:
-%460/(Mf* T*) cioè 460/(69.011 * 0.3)
+%460/(Mf* T*) cioÃ¨ 460/(69.011 * 0.3)
 w_c_min=460/(Mf * tab_T_a_h_perc); % 22.2188 rad/s
 
 %%Linearizzazione del sistema
@@ -94,7 +94,7 @@ w_c_min=460/(Mf * tab_T_a_h_perc); % 22.2188 rad/s
 %x_dot_2 = x_1 -(C_d*u+R_0) x_2*|x_2|
 %x_dot_2 = x_1 -(R_0*|x_2|) x_2 - (C_d*x_2*|x_2|) u
 
-%La derivata di x_2 in x_dot_2 non è immediata:
+%La derivata di x_2 in x_dot_2 non Ã¨ immediata:
 %d/dx_2 (x_1 -(C_d*u+R_0) x_2*|x_2|) = -(2(x_2)^2(C_d*u+R_0))/|x_2|
 
 %Ridefinisco y
@@ -114,19 +114,19 @@ w_c_min=460/(Mf * tab_T_a_h_perc); % 22.2188 rad/s
 
 %Definiamo le matrici A,B,C,D derivabili dalla forma di stato e dall'uscita
 
-%A è una 3x3 perchè devo moltiplicare per le tre equazioni di stato 3x1 e 
+%A Ã¨ una 3x3 perchÃ¨ devo moltiplicare per le tre equazioni di stato 3x1 e 
 %deve saltare fuori un 3x1 quindi 3x3 * 3x1 = 3x1
 A = [0, -(tab_g_const/tab_a),                                                                   (tab_g_const/tab_a);
      1, -(2*(tab_x_equilibrio_2^2)*(tab_C_d*tab_u_equilibrio+tab_R_0)/abs(tab_x_equilibrio_2)), 0;
      0, 0,                                                                                      0];
 
-%B è una 3x1 perchè deve moltiplicare per l'ingresso 1x1 e deve saltare
+%B Ã¨ una 3x1 perchÃ¨ deve moltiplicare per l'ingresso 1x1 e deve saltare
 %fuori una 3x1 quindi 3x1 * 1x1 = 3x1
 B = [0;
      -(tab_C_d*tab_x_equilibrio_2*abs(tab_x_equilibrio_2));
      0];
 
-%C è 1x3 perchè 1x3 * 3x1 = 1x1
+%C Ã¨ 1x3 perchÃ¨ 1x3 * 3x1 = 1x1
 C = [-(tab_eta*tab_x_equilibrio_2), -(tab_eta*tab_x_equilibrio_1),0];
 
 D = 0;
@@ -172,7 +172,7 @@ hold on;
 margin(Mag,phase,w);
 grid on;
 
-%Vincolo sul margine di fase: -180° + arg(L(jw_c))
+%Vincolo sul margine di fase: -180Â° + arg(L(jw_c))
 hold on;
 %Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -270),
 %(w_c_min, -270)
@@ -183,7 +183,7 @@ grid on;
 %%Progettazione della rete regolatrice statica
 
 %Ho bisogno di un polo per il vincolo numero 1.
-%Il guadagno statico resta libero: verrà modificato se necessario.
+%Il guadagno statico resta libero: verrÃ  modificato se necessario.
 R_s = 1/s;
 G_e = R_s*G;
 
