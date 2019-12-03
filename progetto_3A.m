@@ -17,7 +17,7 @@
 
 %Tabella delle caratteristiche:
 tab_a = pi^2;
-tab_a_inv = 1/(pi^2);
+tab_a_inv = 1/tab_a;
 tab_C_d = 2*pi^2;
 tab_R_0 = 45;
 tab_eta = 0.6;
@@ -37,7 +37,7 @@ tab_u_equilibrio = (tab_x_equilibrio_1/(tab_x_equilibrio_2*abs(tab_x_equilibrio_
 tab_g_const = 9.80655;
 
 %Metto insieme la condizione di equilibrio dello stato:
-tab_x_equilibrio = [tab_x_equilibrio_1, tab_x_equilibrio_2, tab_x_equilibrio_3];
+% tab_x_equilibrio = [tab_x_equilibrio_1, tab_x_equilibrio_2, tab_x_equilibrio_3];
 
 %Definizione del sistema:
 %Il sistema è formato da tre variabili di stato:
@@ -75,6 +75,7 @@ B_n_db = 20*log(tab_B_n);
 %Introduco i vincoli indiretti:
 
 %Dato dal rumore di misura.
+%Dato che non ho vincoli di moderazione, questo rimane il vincolo più forte
 w_c_max=tab_omega_n; % 1000 rad/s
 
 %Viene ricavato dalla sovraelongazione con la formula classica.
@@ -113,7 +114,6 @@ w_c_min=460/(Mf * tab_T_a_h_perc); % 22.2188 rad/s
 %B = 0 + d/du (x_dot)|x=x_equilibrio, u=u_equilibrio
 %C = 0 + d/dx (y)|x=x_equilibrio, u=u_equilibrio
 %D = 0 + d/du (y)|x=x_equilibrio, u=u_equilibrio
-
 
 %Definiamo le matrici A,B,C,D derivabili dalla forma di stato e dall'uscita
 
@@ -156,29 +156,29 @@ w_plot_max=10^5;
 
 
 %Nuova finestra grafica
-% figure();
-% 
-% %Vincolo sulla w_c_min
-% patch([w_plot_min,w_c_min,w_c_min,w_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
-% 
-% %Vincolo sulla w_c_max
-% hold on;
-% patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[120,120,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
-% 
-% %Vincolo sull'attenuazione di n
-% hold on;
-% patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
-% 
-% %plotto G
-% hold on;
-% margin(Mag,phase,w);
-% 
-% %Vincolo sul margine di fase: -180° + arg(L(jw_c))
-% hold on;
-% %Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -270),
-% %(w_c_min, -270)
-% patch([w_c_min,w_c_max,w_c_max,w_c_min],[-180+Mf,-180+Mf,-270,-270],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
-% grid on;
+figure();
+
+%Vincolo sulla w_c_min
+patch([w_plot_min,w_c_min,w_c_min,w_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Vincolo sulla w_c_max
+hold on;
+patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[120,120,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Vincolo sull'attenuazione di n
+hold on;
+patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%plotto G
+hold on;
+margin(Mag,phase,w);
+
+%Vincolo sul margine di fase: -180° + arg(L(jw_c))
+hold on;
+%Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -270),
+%(w_c_min, -270)
+patch([w_c_min,w_c_max,w_c_max,w_c_min],[-180+Mf,-180+Mf,-270,-270],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
+grid on;
 
 %%
 %Progettazione della rete regolatrice statica
@@ -281,4 +281,5 @@ grid on;
 
 figure();
 step(F);
+%La risposta a gradino è insoddisfacente, rivelando una instabilità.
 
