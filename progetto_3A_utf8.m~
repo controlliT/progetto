@@ -81,12 +81,11 @@ w_c_max=tab_omega_n; % 1000 rad/s
 
 %Viene ricavato dalla sovraelongazione con la formula classica.
 xi=sqrt(log(s_perc)^2/(pi^2+log(s_perc)^2)); %0.6901
-xi=0.70;
 
 %Mf>69.011Ḟ richiesta più limitatnte delle specifiche (Mf>45Ḟ).
 %PROCEDIMENTO: calcolo xi con la formula inversa, poi calcolo il Mf e
 %valuto la condizione più restrittiva
-Mf=xi*100; %69.0107°
+Mf=xi*100; %69.0107Ḟ
 
 %Calcolo la frequenza di attraversamento minimo attraverso la formula:
 %460/(Mf* T*) cioè 460/(69.011 * 0.3)
@@ -244,7 +243,7 @@ patch([w_c_min,w_c_max,w_c_max,w_c_min],[-180+Mf,-180+Mf,-270,-270],'green','Fac
 %Progettazione della rete regolatrice dinamica
 
 %Si tratta della frequenza di attraversamento scelta. NON FUNZIONA BOH
-omega_c_star = 105;
+omega_c_star = 130;
 
 %Ricavo i dati di attraversamento di G_e
 [Mag_G_e_omega_c_star,phase_G_e_omega_c_star,omega_c_star]=bode(G_e, omega_c_star);
@@ -261,7 +260,7 @@ tau_alpha_rete_anticipatrice = (cos(phi_star*pi/180)-1/M_star)/(omega_c_star*sin
 alpha_rete_anticipatrice = tau_alpha_rete_anticipatrice/tau_rete_anticipatrice;
 
 %Ricavo il regolatore dinamico (anticipatore).
-R_d_ant = 0.035*(1+s*tau_rete_anticipatrice)^2/(1+tau_alpha_rete_anticipatrice*s)^2;
+R_d_ant = 0.031*(1+s*tau_rete_anticipatrice)/(1+tau_alpha_rete_anticipatrice*s);
 
 
 %Creo la funzione ad anello aperto (L).
@@ -271,6 +270,7 @@ L = R_d_ant*G_e;
 %RETE RITARDATRICE PER RISOLUZIONE DI n(t)
 %Si tratta della frequenza di attraversamento scelta. NON FUNZIONA BOH
 omega_c_star_ant = 750;
+omega_c_star_rit = 800;
 
 %Ricavo i dati di attraversamento di G_e
 % [Mag_L_omega_c_star,phase_L_omega_c_star,omega_c_star]=bode(L, omega_c_star);
@@ -284,11 +284,13 @@ omega_c_star_ant = 750;
 % tau_rete_ritardatrice = (cos(phi_star*pi/180)-1/M_star)/(omega_c_star*sin(phi_star*pi/180));
 % tau_alpha_rete_ritardatrice = (M_star-cos(phi_star*pi/180))/(omega_c_star*sin(phi_star*pi/180));
 
+% tau_rete_anticipatrice = ;
+% tau_alpha_rete_anticipatrice = ;
 
 tau_rete_ritardatrice = 1/omega_c_star;
 tau_alpha_rete_ritardatrice = 0.001 * tau_rete_ritardatrice;
 
-R_d_ant = ((1+s*tau_alpha_rete_ritardatrice)^2/(1+tau_rete_ritardatrice*s)^2);
+R_d_ant_rit = ((1+s*tau_alpha_rete_ritardatrice)^3/(1+tau_rete_ritardatrice*s)^3);
 
 
 
