@@ -77,16 +77,23 @@ B_n_db = 20*log(tab_B_n);
 %Dato dal rumore di misura.
 %Dato che non ho vincoli di moderazione, questo rimane il vincolo più forte
 w_c_max=tab_omega_n; % 1000 rad/s
+%Limite superiore per la frequenza di attraversamento.
 
 %Viene ricavato dalla sovraelongazione con la formula classica.
-xi=sqrt(log(s_perc)^2/(pi^2+log(s_perc)^2));
+xi=sqrt(log(s_perc)^2/(pi^2+log(s_perc)^2)); %0.6901
 
-%Mf>69.011° richiesta più limitatnte delle specifiche (Mf>45°),
-Mf=xi*100;
+%Mf>69.011° richiesta più limitatnte delle specifiche (Mf>45°).
+%PROCEDIMENTO: calcolo xi con la formula inversa, poi calcolo il Mf e
+%valuto la condizione più restrittiva
+Mf=xi*100; %69.0107°
 
 %Calcolo la frequenza di attraversamento minimo attraverso la formula:
 %460/(Mf* T*) cioè 460/(69.011 * 0.3)
+%Questo limite inferiore è dettato dal tempo di assestamento.
 w_c_min=460/(Mf * tab_T_a_h_perc); % 22.2188 rad/s
+
+%Abbiamo individuato l'intervallo per la pulsazione di attraversamento 
+%w_c* [22.2188 rad/s, 1000 rad/s]
 
 %%
 %Linearizzazione del sistema
@@ -134,6 +141,10 @@ C = [-(tab_eta*tab_x_equilibrio_2), -(tab_eta*tab_x_equilibrio_1),0];
 
 D = 0;
 
+%Per verificare il contenuto delle variabili globali uso la funzione disp
+%disp(A);
+
+
 %Definisco la funzione di traferimento
 s=tf('s');
 [Num,Den]=ss2tf(A,B,C,D);
@@ -144,6 +155,7 @@ zpk(G)
 %Si evidenzia uno zero che diverge.
 %Si evidenzia uno zero nell'origine e un polo nell'origine.
 %Si evidenzia due poli non nell'origine.
+%Si evidenzia uno zero non nell'origine (quello divergente).
 
 %Plot del diagramma di bode
 
@@ -159,11 +171,12 @@ w_plot_max=10^5;
 figure();
 
 %Vincolo sulla w_c_min
-patch([w_plot_min,w_c_min,w_c_min,w_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+patch([w_plot_min,w_c_min,w_c_min,w_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0);
+text(w_c_min-22,-100,'w_c^* >= 22.2188 rad/sec');
 
 %Vincolo sulla w_c_max
 hold on;
-patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[120,120,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[200,200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
 
 %Vincolo sull'attenuazione di n
 hold on;
@@ -180,10 +193,16 @@ hold on;
 patch([w_c_min,w_c_max,w_c_max,w_c_min],[-180+Mf,-180+Mf,-270,-270],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
 grid on;
 
+
+
+%-------------------------------------------------------------------------------------------------------------------------------------
+
+
 %%
 %Progettazione della rete regolatrice statica
 
 %Ho bisogno di un polo per il vincolo numero 1.
+%Volgio un e_inf = 0
 %Il guadagno statico resta libero: verrà modificato se necessario.
 R_s = 1/s;
 G_e = R_s*G;
@@ -208,6 +227,7 @@ patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[120,120,0,0],'yellow','FaceAlpha'
 hold on;
 patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
 
+
 %Plotto G_e
 hold on;
 bodeplot(G_e, {w_plot_min,w_plot_max});
@@ -223,14 +243,14 @@ patch([w_c_min,w_c_max,w_c_max,w_c_min],[-180+Mf,-180+Mf,-270,-270],'green','Fac
 %Progettazione della rete regolatrice dinamica
 
 %Si tratta della frequenza di attraversamento scelta. NON FUNZIONA BOH
-omega_c_star = 45;
+omega_c_star = 130;
 
 %Ricavo i dati di attraversamento di G_e
 [Mag_G_e_omega_c_star,phase_G_e_omega_c_star,omega_c_star]=bode(G_e, omega_c_star);
 
 Mag_G_e_omega_c_star_db = 20*log(Mag_G_e_omega_c_star);
 
-M_star = 1/10^(Mag_G_e_omega_c_star_db/20);
+M_star = 10^-(Mag_G_e_omega_c_star_db/20);
 
 phi_star = Mf-180-phase_G_e_omega_c_star;
 
@@ -239,11 +259,38 @@ tau_alpha_rete_anticipatrice = (cos(phi_star*pi/180)-1/M_star)/(omega_c_star*sin
 
 alpha_rete_anticipatrice = tau_alpha_rete_anticipatrice/tau_rete_anticipatrice;
 
-%Ricavo il regolatore dinamico.
-R_d = (1+s*tau_rete_anticipatrice)/(1+tau_alpha_rete_anticipatrice*s);
+%Ricavo il regolatore dinamico (anticipatore).
+R_d_ant = 0.1*(1+s*tau_rete_anticipatrice)/(1+tau_alpha_rete_anticipatrice*s);
+
 
 %Creo la funzione ad anello aperto (L).
-L = R_d*G_e;
+L = R_d_ant*G_e;
+
+%----------------------------------------------------------------------
+%RETE RITARDATRICE PER RISOLUZIONE DI n(t)
+%Si tratta della frequenza di attraversamento scelta. NON FUNZIONA BOH
+omega_c_star = 1000;
+
+%Ricavo i dati di attraversamento di G_e
+[Mag_L_omega_c_star,phase_L_omega_c_star,omega_c_star]=bode(L, omega_c_star);
+
+Mag_L_omega_c_star_db = 20*log(Mag_L_omega_c_star);
+
+M_star = 10^-(Mag_L_omega_c_star_db/20);
+
+phi_star = Mf-180-phase_L_omega_c_star;
+
+tau_rete_ritardatrice = (cos(phi_star*pi/180)-1/M_star)/(omega_c_star*sin(phi_star*pi/180));
+tau_alpha_rete_ritardatrice = (M_star-cos(phi_star*pi/180))/(omega_c_star*sin(phi_star*pi/180));
+
+R_d_rit = (1+s*tau_alpha_rete_ritardatrice)/(1+tau_rete_ritardatrice*s);
+
+
+
+%ricalcolo L con aggiunta della rete ritardatrice
+L = L * R_d_rit;
+
+
 
 %Stampo gli zeri e i poli di L
 zpk(L)
@@ -259,7 +306,7 @@ grid on;
 
 %%
 %Regolatore finale
-R=R_s*R_d;
+R=R_s*R_d_ant;
 
 %%
 %Chiusura del loop

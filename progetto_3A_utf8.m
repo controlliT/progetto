@@ -10,13 +10,14 @@
 %Luca Bartolomei 0000825005
 
 
-%%Caratteristiche impianto
+%%
+%Caratteristiche impianto
 
 %Si tratta di un sistema SISO.
 
 %Tabella delle caratteristiche:
 tab_a = pi^2;
-tab_a_inv = 1/(pi^2);
+tab_a_inv = 1/tab_a;
 tab_C_d = 2*pi^2;
 tab_R_0 = 45;
 tab_eta = 0.6;
@@ -36,7 +37,7 @@ tab_u_equilibrio = (tab_x_equilibrio_1/(tab_x_equilibrio_2*abs(tab_x_equilibrio_
 tab_g_const = 9.80655;
 
 %Metto insieme la condizione di equilibrio dello stato:
-tab_x_equilibrio = [tab_x_equilibrio_1, tab_x_equilibrio_2, tab_x_equilibrio_3];
+% tab_x_equilibrio = [tab_x_equilibrio_1, tab_x_equilibrio_2, tab_x_equilibrio_3];
 
 %Definizione del sistema:
 %Il sistema è formato da tre variabili di stato:
@@ -54,10 +55,11 @@ tab_x_equilibrio = [tab_x_equilibrio_1, tab_x_equilibrio_2, tab_x_equilibrio_3];
 %x_dot_2 = -C_d*u*x_2*|x_2|-R_0*x_2*|x_2|+x_1
 %x_dot_3 = 0
  
-%%Specifiche di progetto
+%%
+%Specifiche di progetto
 
 %1 Errore a regime nullo con riferimento a gradino w(t) = W1(t)
-%2 Per garantire una certa robustezza del sistema si deve avere un margine di fase M_f* = 45°
+%2 Per garantire una certa robustezza del sistema si deve avere un margine di fase M_f* = 45Ḟ
 %3 Il sistema può accettare un sovraelongazione percentuale al massimo del 5% : S_% <= 5%
 
 s_perc = 0.05;
@@ -73,19 +75,28 @@ B_n_db = 20*log(tab_B_n);
 %Introduco i vincoli indiretti:
 
 %Dato dal rumore di misura.
+%Dato che non ho vincoli di moderazione, questo rimane il vincolo più forte
 w_c_max=tab_omega_n; % 1000 rad/s
+%Limite superiore per la frequenza di attraversamento.
 
 %Viene ricavato dalla sovraelongazione con la formula classica.
-xi=sqrt(log(s_perc)^2/(pi^2+log(s_perc)^2));
+xi=sqrt(log(s_perc)^2/(pi^2+log(s_perc)^2)); %0.6901
 
-%Mf>69.011° richiesta più limitatnte delle specifiche (Mf>45°),
-Mf=xi*100;
+%Mf>69.011Ḟ richiesta più limitatnte delle specifiche (Mf>45Ḟ).
+%PROCEDIMENTO: calcolo xi con la formula inversa, poi calcolo il Mf e
+%valuto la condizione più restrittiva
+Mf=xi*100; %69.0107Ḟ
 
 %Calcolo la frequenza di attraversamento minimo attraverso la formula:
 %460/(Mf* T*) cioè 460/(69.011 * 0.3)
+%Questo limite inferiore è dettato dal tempo di assestamento.
 w_c_min=460/(Mf * tab_T_a_h_perc); % 22.2188 rad/s
 
-%%Linearizzazione del sistema
+%Abbiamo individuato l'intervallo per la pulsazione di attraversamento 
+%w_c* [22.2188 rad/s, 1000 rad/s]
+
+%%
+%Linearizzazione del sistema
 
 %Ridefinisco la prima equazione di stato:
 %x_dot_1 = -(g/a) x_2 + (g/a) x_3
@@ -111,7 +122,6 @@ w_c_min=460/(Mf * tab_T_a_h_perc); % 22.2188 rad/s
 %C = 0 + d/dx (y)|x=x_equilibrio, u=u_equilibrio
 %D = 0 + d/du (y)|x=x_equilibrio, u=u_equilibrio
 
-
 %Definiamo le matrici A,B,C,D derivabili dalla forma di stato e dall'uscita
 
 %A è una 3x3 perchè devo moltiplicare per le tre equazioni di stato 3x1 e 
@@ -131,6 +141,10 @@ C = [-(tab_eta*tab_x_equilibrio_2), -(tab_eta*tab_x_equilibrio_1),0];
 
 D = 0;
 
+%Per verificare il contenuto delle variabili globali uso la funzione disp
+%disp(A);
+
+
 %Definisco la funzione di traferimento
 s=tf('s');
 [Num,Den]=ss2tf(A,B,C,D);
@@ -141,6 +155,7 @@ zpk(G)
 %Si evidenzia uno zero che diverge.
 %Si evidenzia uno zero nell'origine e un polo nell'origine.
 %Si evidenzia due poli non nell'origine.
+%Si evidenzia uno zero non nell'origine (quello divergente).
 
 %Plot del diagramma di bode
 
@@ -156,23 +171,22 @@ w_plot_max=10^5;
 figure();
 
 %Vincolo sulla w_c_min
-patch([w_plot_min,w_c_min,w_c_min,w_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
-grid on;
+patch([w_plot_min,w_c_min,w_c_min,w_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0);
+text(w_c_min-22,-100,'w_c^* >= 22.2188 rad/sec');
 
 %Vincolo sulla w_c_max
-patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[120,120,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
-grid on;
+hold on;
+patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[200,200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
 
 %Vincolo sull'attenuazione di n
+hold on;
 patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
-grid on;
 
 %plotto G
 hold on;
 margin(Mag,phase,w);
-grid on;
 
-%Vincolo sul margine di fase: -180° + arg(L(jw_c))
+%Vincolo sul margine di fase: -180Ḟ + arg(L(jw_c))
 hold on;
 %Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -270),
 %(w_c_min, -270)
@@ -180,31 +194,139 @@ patch([w_c_min,w_c_max,w_c_max,w_c_min],[-180+Mf,-180+Mf,-270,-270],'green','Fac
 grid on;
 
 
-%%Progettazione della rete regolatrice statica
+
+%-------------------------------------------------------------------------------------------------------------------------------------
+
+
+%%
+%Progettazione della rete regolatrice statica
 
 %Ho bisogno di un polo per il vincolo numero 1.
+%Volgio un e_inf = 0
 %Il guadagno statico resta libero: verrà modificato se necessario.
 R_s = 1/s;
 G_e = R_s*G;
 
-%Stampo G_e
+%Stampo gli zeri e i poli di G_e 
 zpk(G_e)
 
+%Ricavo i dati sulla G_e
 [Mag_e,phase_e,w_e]=bode(G_e,{w_plot_min,w_plot_max});
+
+%Nuova finestra grafica.
+figure();
+
+%Vincolo sulla w_c_min
+patch([w_plot_min,w_c_min,w_c_min,w_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Vincolo sulla w_c_max
 hold on;
-margin(Mag_e,phase_e,w_e);
-grid on;
+patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[120,120,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
 
-%%Progettazione della rete regolatrice dinamica
-alpha = 0.2;
-tau = 10;
-R_d = (1+(s/tau))/(1+alpha*(s/tau));
-L = R_d*G_e;
+%Vincolo sull'attenuazione di n
+hold on;
+patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
 
-%Stampo L
+
+%Plotto G_e
+hold on;
+bodeplot(G_e, {w_plot_min,w_plot_max});
+% margin(Mag_e,phase_e,w_e);
+
+%Vincolo sul margine di fase: -180Ḟ + arg(L(jw_c))
+hold on;
+%Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -270),
+%(w_c_min, -270)
+patch([w_c_min,w_c_max,w_c_max,w_c_min],[-180+Mf,-180+Mf,-270,-270],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
+
+%%
+%Progettazione della rete regolatrice dinamica
+
+%Si tratta della frequenza di attraversamento scelta. NON FUNZIONA BOH
+omega_c_star = 130;
+
+%Ricavo i dati di attraversamento di G_e
+[Mag_G_e_omega_c_star,phase_G_e_omega_c_star,omega_c_star]=bode(G_e, omega_c_star);
+
+Mag_G_e_omega_c_star_db = 20*log(Mag_G_e_omega_c_star);
+
+M_star = 10^-(Mag_G_e_omega_c_star_db/20);
+
+phi_star = Mf-180-phase_G_e_omega_c_star;
+
+tau_rete_anticipatrice = (M_star-cos(phi_star*pi/180))/(omega_c_star*sin(phi_star*pi/180));
+tau_alpha_rete_anticipatrice = (cos(phi_star*pi/180)-1/M_star)/(omega_c_star*sin(phi_star*pi/180));
+
+alpha_rete_anticipatrice = tau_alpha_rete_anticipatrice/tau_rete_anticipatrice;
+
+%Ricavo il regolatore dinamico (anticipatore).
+R_d_ant = 0.1*(1+s*tau_rete_anticipatrice)/(1+tau_alpha_rete_anticipatrice*s);
+
+
+%Creo la funzione ad anello aperto (L).
+L = R_d_ant*G_e;
+
+%----------------------------------------------------------------------
+%RETE RITARDATRICE PER RISOLUZIONE DI n(t)
+%Si tratta della frequenza di attraversamento scelta. NON FUNZIONA BOH
+omega_c_star = 1000;
+
+%Ricavo i dati di attraversamento di G_e
+[Mag_L_omega_c_star,phase_L_omega_c_star,omega_c_star]=bode(L, omega_c_star);
+
+Mag_L_omega_c_star_db = 20*log(Mag_L_omega_c_star);
+
+M_star = 10^-(Mag_L_omega_c_star_db/20);
+
+phi_star = Mf-180-phase_L_omega_c_star;
+
+tau_rete_ritardatrice = (cos(phi_star*pi/180)-1/M_star)/(omega_c_star*sin(phi_star*pi/180));
+tau_alpha_rete_ritardatrice = (M_star-cos(phi_star*pi/180))/(omega_c_star*sin(phi_star*pi/180));
+
+R_d_rit = (1+s*tau_alpha_rete_ritardatrice)/(1+tau_rete_ritardatrice*s);
+
+
+
+%ricalcolo L con aggiunta della rete ritardatrice
+L = L * R_d_rit;
+
+
+
+%Stampo gli zeri e i poli di L
 zpk(L)
+%Ricavo i dati sulla L
+[Mag_L,phase_L,w_L]=bode(L,{w_plot_min,w_plot_max});
 
-[Mag_l,phase_l,w_l]=bode(L,{w_plot_min,w_plot_max});
+%Plotto L sul grafico precedente e la confronto con G_e
 hold on;
-margin(Mag_l,phase_l,w_l);
+margin(Mag_L,phase_L,w_L);
 grid on;
+
+%Il grafico sembra reggere.
+
+%%
+%Regolatore finale
+R=R_s*R_d_ant;
+
+%%
+%Chiusura del loop
+
+%Chiudo il loop: F
+
+F=L/(1+L);
+
+%Ricavo informazioni
+[Mag_F,phase_F,w_F]=bode(F,{w_plot_min,w_plot_max});
+
+%Stampo gli zeri e i poli di F
+zpk(F)
+
+%Plotto F
+figure();
+margin(Mag_F,phase_F,w_F);
+grid on;
+
+figure();
+step(F);
+%La risposta a gradino è insoddisfacente, rivelando una instabilità.
+
