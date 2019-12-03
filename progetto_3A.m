@@ -10,7 +10,8 @@
 %Luca Bartolomei 0000825005
 
 
-%%Caratteristiche impianto
+%%
+%Caratteristiche impianto
 
 %Si tratta di un sistema SISO.
 
@@ -54,7 +55,8 @@ tab_x_equilibrio = [tab_x_equilibrio_1, tab_x_equilibrio_2, tab_x_equilibrio_3];
 %x_dot_2 = -C_d*u*x_2*|x_2|-R_0*x_2*|x_2|+x_1
 %x_dot_3 = 0
  
-%%Specifiche di progetto
+%%
+%Specifiche di progetto
 
 %1 Errore a regime nullo con riferimento a gradino w(t) = W1(t)
 %2 Per garantire una certa robustezza del sistema si deve avere un margine di fase M_f* = 45°
@@ -85,7 +87,8 @@ Mf=xi*100;
 %460/(Mf* T*) cioè 460/(69.011 * 0.3)
 w_c_min=460/(Mf * tab_T_a_h_perc); % 22.2188 rad/s
 
-%%Linearizzazione del sistema
+%%
+%Linearizzazione del sistema
 
 %Ridefinisco la prima equazione di stato:
 %x_dot_1 = -(g/a) x_2 + (g/a) x_3
@@ -153,58 +156,129 @@ w_plot_max=10^5;
 
 
 %Nuova finestra grafica
-figure();
+% figure();
+% 
+% %Vincolo sulla w_c_min
+% patch([w_plot_min,w_c_min,w_c_min,w_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+% 
+% %Vincolo sulla w_c_max
+% hold on;
+% patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[120,120,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+% 
+% %Vincolo sull'attenuazione di n
+% hold on;
+% patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
+% 
+% %plotto G
+% hold on;
+% margin(Mag,phase,w);
+% 
+% %Vincolo sul margine di fase: -180° + arg(L(jw_c))
+% hold on;
+% %Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -270),
+% %(w_c_min, -270)
+% patch([w_c_min,w_c_max,w_c_max,w_c_min],[-180+Mf,-180+Mf,-270,-270],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
+% grid on;
 
-%Vincolo sulla w_c_min
-patch([w_plot_min,w_c_min,w_c_min,w_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
-grid on;
-
-%Vincolo sulla w_c_max
-patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[120,120,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
-grid on;
-
-%Vincolo sull'attenuazione di n
-patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
-grid on;
-
-%plotto G
-hold on;
-margin(Mag,phase,w);
-grid on;
-
-%Vincolo sul margine di fase: -180° + arg(L(jw_c))
-hold on;
-%Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -270),
-%(w_c_min, -270)
-patch([w_c_min,w_c_max,w_c_max,w_c_min],[-180+Mf,-180+Mf,-270,-270],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
-grid on;
-
-
-%%Progettazione della rete regolatrice statica
+%%
+%Progettazione della rete regolatrice statica
 
 %Ho bisogno di un polo per il vincolo numero 1.
 %Il guadagno statico resta libero: verrà modificato se necessario.
 R_s = 1/s;
 G_e = R_s*G;
 
-%Stampo G_e
+%Stampo gli zeri e i poli di G_e 
 zpk(G_e)
 
+%Ricavo i dati sulla G_e
 [Mag_e,phase_e,w_e]=bode(G_e,{w_plot_min,w_plot_max});
-hold on;
-margin(Mag_e,phase_e,w_e);
-grid on;
 
-%%Progettazione della rete regolatrice dinamica
-alpha = 0.2;
-tau = 10;
-R_d = (1+(s/tau))/(1+alpha*(s/tau));
+%Nuova finestra grafica.
+figure();
+
+%Vincolo sulla w_c_min
+patch([w_plot_min,w_c_min,w_c_min,w_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Vincolo sulla w_c_max
+hold on;
+patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[120,120,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Vincolo sull'attenuazione di n
+hold on;
+patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Plotto G_e
+hold on;
+bodeplot(G_e, {w_plot_min,w_plot_max});
+% margin(Mag_e,phase_e,w_e);
+
+%Vincolo sul margine di fase: -180° + arg(L(jw_c))
+hold on;
+%Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -270),
+%(w_c_min, -270)
+patch([w_c_min,w_c_max,w_c_max,w_c_min],[-180+Mf,-180+Mf,-270,-270],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
+
+%%
+%Progettazione della rete regolatrice dinamica
+
+%Si tratta della frequenza di attraversamento scelta. NON FUNZIONA BOH
+omega_c_star = 45;
+
+%Ricavo i dati di attraversamento di G_e
+[Mag_G_e_omega_c_star,phase_G_e_omega_c_star,omega_c_star]=bode(G_e, omega_c_star);
+
+Mag_G_e_omega_c_star_db = 20*log(Mag_G_e_omega_c_star);
+
+M_star = 1/10^(Mag_G_e_omega_c_star_db/20);
+
+phi_star = Mf-180-phase_G_e_omega_c_star;
+
+tau_rete_anticipatrice = (M_star-cos(phi_star*pi/180))/(omega_c_star*sin(phi_star*pi/180));
+tau_alpha_rete_anticipatrice = (cos(phi_star*pi/180)-1/M_star)/(omega_c_star*sin(phi_star*pi/180));
+
+alpha_rete_anticipatrice = tau_alpha_rete_anticipatrice/tau_rete_anticipatrice;
+
+%Ricavo il regolatore dinamico.
+R_d = (1+s*tau_rete_anticipatrice)/(1+tau_alpha_rete_anticipatrice*s);
+
+%Creo la funzione ad anello aperto (L).
 L = R_d*G_e;
 
-%Stampo L
+%Stampo gli zeri e i poli di L
 zpk(L)
+%Ricavo i dati sulla L
+[Mag_L,phase_L,w_L]=bode(L,{w_plot_min,w_plot_max});
 
-[Mag_l,phase_l,w_l]=bode(L,{w_plot_min,w_plot_max});
+%Plotto L sul grafico precedente e la confronto con G_e
 hold on;
-margin(Mag_l,phase_l,w_l);
+margin(Mag_L,phase_L,w_L);
 grid on;
+
+%Il grafico sembra reggere.
+
+%%
+%Regolatore finale
+R=R_s*R_d;
+
+%%
+%Chiusura del loop
+
+%Chiudo il loop: F
+
+F=L/(1+L);
+
+%Ricavo informazioni
+[Mag_F,phase_F,w_F]=bode(F,{w_plot_min,w_plot_max});
+
+%Stampo gli zeri e i poli di F
+zpk(F)
+
+%Plotto F
+figure();
+margin(Mag_F,phase_F,w_F);
+grid on;
+
+figure();
+step(F);
+
