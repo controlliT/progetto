@@ -29,7 +29,7 @@ tab.T_a_1 = 0.3;
 tab.T_a_0 = 0.033;
 tab.x_equilibrio_1 = 10;
 tab.x_equilibrio_2 = 6;
-tab.x_equilibrio_3 = 6;
+tab.x_equilibrio_3 = 7;
 tab.u_equilibrio = (tab.x_equilibrio_1/(tab.x_equilibrio_2*abs(tab.x_equilibrio_2))-tab.R_0)/(tab.C_d);
 
 %La costante g non è presente nella tabella:
@@ -65,7 +65,7 @@ s_perc = 0.05;
 
 %4 Il tempo di assestamento all'1% deve essere tenuto relativamente basso T_a_1 = 0.3 s
 %5 Devo abbattere i rumori n di 30 volte che in db =
-B_n_db = 20*log(tab.B_n);
+B_n_db = 20*log10(tab.B_n);
 
 %Specifiche opzionali:
 
@@ -306,7 +306,7 @@ patch([omega_c_min,omega_c_max,omega_c_max,omega_c_min],[-180+Mf,-180+Mf,-180,-1
 %Dato che il guadagno è libero lo uso per correggere la rete.
 %Abbiamo calcolato il valore di mu attraverso il grafico di bode.
 
-omega_c_star_mu = 25;
+omega_c_star_mu = 45;
 
 [Mag_G_e_1_omega_c_star_ant,phase_G_e_1_omega_c_star_mu,omega_c_star_mu]=bode(G_e_1, omega_c_star_mu);
 
@@ -336,10 +336,14 @@ R_d_rit = (1+s*tau_alpha_rete_ritardatrice)^2/(1+tau_rete_ritardatrice*s)^2;
 
 %%
 %Calcolo L con aggiunta della rete ritardatrice
-L = mu_d * R_d_rit * R_d_ant * G_e;
+L = mu_d * R_d_ant * G_e;
+
+[NumL, DenL] = tfdata(L);
+NumL = NumL{1,1};
+DenL = DenL{1,1};
 
 %Stampo gli zeri e i poli di L
-zpk(L)
+
 %Ricavo i dati sulla L
 [Mag_L,phase_L,omega_L]=bode(L,{omega_plot_min,omega_plot_max});
 
