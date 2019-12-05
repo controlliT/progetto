@@ -59,7 +59,7 @@ tab_g_const = 9.80655;
 %Specifiche di progetto
 
 %1 Errore a regime nullo con riferimento a gradino w(t) = W1(t)
-%2 Per garantire una certa robustezza del sistema si deve avere un margine di fase M_f* = 45°
+%2 Per garantire una certa robustezza del sistema si deve avere un margine di fase M_f* = 45 
 %3 Il sistema può accettare un sovraelongazione percentuale al massimo del 5% : S_% <= 5%
 
 s_perc = 0.05;
@@ -85,7 +85,7 @@ xi=sqrt(log(s_perc)^2/(pi^2+log(s_perc)^2)); %0.6901
 %Mf>69.011° richiesta più limitatnte delle specifiche (Mf>45°).
 %PROCEDIMENTO: calcolo xi con la formula inversa, poi calcolo il Mf e
 %valuto la condizione più restrittiva
-Mf=xi*100; %69.0107°
+Mf=xi*100; %69.0107 
 
 %Calcolo la frequenza di attraversamento minimo attraverso la formula:
 %460/(Mf* T*) cioè 460/(69.011 * 0.3)
@@ -126,7 +126,12 @@ w_c_min=460/(Mf * tab_T_a_h_perc); % 22.2188 rad/s
 
 %A è una 3x3 perchè devo moltiplicare per le tre equazioni di stato 3x1 e 
 %deve saltare fuori un 3x1 quindi 3x3 * 3x1 = 3x1
-A = [0, -(tab_g_const/tab_a),                                                                   (tab_g_const/tab_a);
+% A = [0, -(tab_g_const/tab_a),                                                                   (tab_g_const/tab_a);
+%      1, -(2*(tab_x_equilibrio_2^2)*(tab_C_d*tab_u_equilibrio+tab_R_0)/abs(tab_x_equilibrio_2)), 0;
+%      0, 0,                                                                                      0];
+
+%Consideriamo la pressione sul fondo costante.
+A = [0, 0,                                                                                      0;
      1, -(2*(tab_x_equilibrio_2^2)*(tab_C_d*tab_u_equilibrio+tab_R_0)/abs(tab_x_equilibrio_2)), 0;
      0, 0,                                                                                      0];
 
@@ -137,7 +142,7 @@ B = [0;
      0];
 
 %C è 1x3 perchè 1x3 * 3x1 = 1x1
-C = [-(tab_eta*tab_x_equilibrio_2), -(tab_eta*tab_x_equilibrio_1),0];
+C = [-(tab_eta*tab_x_equilibrio_2), -(tab_eta*tab_x_equilibrio_1), 0];
 
 D = 0;
 
@@ -168,30 +173,30 @@ w_plot_max=10^5;
 
 
 %Nuova finestra grafica
-figure();
-
-%Vincolo sulla w_c_min
-patch([w_plot_min,w_c_min,w_c_min,w_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0);
-text(w_c_min-22,-100,'w_c^* >= 22.2188 rad/sec');
-
-%Vincolo sulla w_c_max
-hold on;
-patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[200,200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
-
-%Vincolo sull'attenuazione di n
-hold on;
-patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
-
-%plotto G
-hold on;
-margin(Mag,phase,w);
-
-%Vincolo sul margine di fase: -180° + arg(L(jw_c))
-hold on;
-%Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -270),
-%(w_c_min, -270)
-patch([w_c_min,w_c_max,w_c_max,w_c_min],[-180+Mf,-180+Mf,-270,-270],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
-grid on;
+% figure();
+% 
+% %Vincolo sulla w_c_min
+% patch([w_plot_min,w_c_min,w_c_min,w_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0);
+% text(w_c_min-22,-100,'w_c^* >= 22.2188 rad/sec');
+% 
+% %Vincolo sulla w_c_max
+% hold on;
+% patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[200,200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+% 
+% %Vincolo sull'attenuazione di n
+% hold on;
+% patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
+% 
+% %plotto G
+% hold on;
+% margin(Mag,phase,w);
+% 
+% %Vincolo sul margine di fase: -180° + arg(L(jw_c))
+% hold on;
+% %Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -270),
+% %(w_c_min, -270)
+% patch([w_c_min,w_c_max,w_c_max,w_c_min],[-180+Mf,-180+Mf,-270,-270],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
+% grid on;
 
 
 
@@ -237,13 +242,14 @@ bodeplot(G_e, {w_plot_min,w_plot_max});
 hold on;
 %Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -270),
 %(w_c_min, -270)
-patch([w_c_min,w_c_max,w_c_max,w_c_min],[-180+Mf,-180+Mf,-270,-270],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
+patch([w_c_min,w_c_max,w_c_max,w_c_min],[-180+Mf,-180+Mf,-180,-180],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
 
 %%
 %Progettazione della rete regolatrice dinamica
 
-%Si tratta della frequenza di attraversamento scelta. NON FUNZIONA BOH
-omega_c_star = 130;
+%Si tratta della frequenza di attraversamento scelta.
+omega_c_star = 150;
+Mf=79;
 
 %Ricavo i dati di attraversamento di G_e
 [Mag_G_e_omega_c_star,phase_G_e_omega_c_star,omega_c_star]=bode(G_e, omega_c_star);
@@ -260,42 +266,29 @@ tau_alpha_rete_anticipatrice = (cos(phi_star*pi/180)-1/M_star)/(omega_c_star*sin
 alpha_rete_anticipatrice = tau_alpha_rete_anticipatrice/tau_rete_anticipatrice;
 
 %Ricavo il regolatore dinamico (anticipatore).
-R_d_ant = 0.1*(1+s*tau_rete_anticipatrice)/(1+tau_alpha_rete_anticipatrice*s);
-
-
-%Creo la funzione ad anello aperto (L).
-L = R_d_ant*G_e;
+R_d_ant = 0.018*(1+s*tau_rete_anticipatrice)/(1+tau_alpha_rete_anticipatrice*s);
 
 %----------------------------------------------------------------------
 %RETE RITARDATRICE PER RISOLUZIONE DI n(t)
 %Si tratta della frequenza di attraversamento scelta. NON FUNZIONA BOH
-omega_c_star = 1000;
+omega_c_star_rit = 150;
 
-%Ricavo i dati di attraversamento di G_e
-[Mag_L_omega_c_star,phase_L_omega_c_star,omega_c_star]=bode(L, omega_c_star);
+tau_rete_ritardatrice = 1/omega_c_star_rit;
+tau_alpha_rete_ritardatrice = 0.01 * tau_rete_ritardatrice;
 
-Mag_L_omega_c_star_db = 20*log(Mag_L_omega_c_star);
-
-M_star = 10^-(Mag_L_omega_c_star_db/20);
-
-phi_star = Mf-180-phase_L_omega_c_star;
-
-tau_rete_ritardatrice = (cos(phi_star*pi/180)-1/M_star)/(omega_c_star*sin(phi_star*pi/180));
-tau_alpha_rete_ritardatrice = (M_star-cos(phi_star*pi/180))/(omega_c_star*sin(phi_star*pi/180));
-
-R_d_rit = (1+s*tau_alpha_rete_ritardatrice)/(1+tau_rete_ritardatrice*s);
+R_d_rit = (1+s*tau_alpha_rete_ritardatrice)^2/(1+tau_rete_ritardatrice*s)^2;
 
 
-
-%ricalcolo L con aggiunta della rete ritardatrice
-L = L * R_d_rit;
-
+%Calcolo L con aggiunta della rete ritardatrice
+L = R_d_rit * R_d_ant * G_e;
 
 
 %Stampo gli zeri e i poli di L
 zpk(L)
 %Ricavo i dati sulla L
 [Mag_L,phase_L,w_L]=bode(L,{w_plot_min,w_plot_max});
+[Mag_L_omega_n,phase_L_omega_n,w_L_omega_n]=bode(L,tab_omega_n);
+Mag_L_omega_n_db = 20*log(Mag_L_omega_n);
 
 %Plotto L sul grafico precedente e la confronto con G_e
 hold on;
@@ -322,11 +315,14 @@ F=L/(1+L);
 zpk(F)
 
 %Plotto F
-figure();
-margin(Mag_F,phase_F,w_F);
-grid on;
+% figure();
+% margin(Mag_F,phase_F,w_F);
+% grid on;
+
+%Informazioni sullo step
+stepinfo(F)
 
 figure();
 step(F);
-%La risposta a gradino è insoddisfacente, rivelando una instabilità.
+
 

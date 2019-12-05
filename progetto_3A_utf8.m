@@ -16,25 +16,24 @@
 %Si tratta di un sistema SISO.
 
 %Tabella delle caratteristiche:
-tab_a = pi^2;
-tab_a_inv = 1/tab_a;
-tab_C_d = 2*pi^2;
-tab_R_0 = 45;
-tab_eta = 0.6;
-tab_W = 30;
-tab_omega_n = 1000;
-tab_A_n = 0.02;
-tab_B_n = 30;
-tab_h_perc = 1;
-tab_T_a_h_perc = 0.3;
-tab_T_a_0 = 0.033;
-tab_x_equilibrio_1 = 10;
-tab_x_equilibrio_2 = 6;
-tab_x_equilibrio_3 = 6;
-tab_u_equilibrio = (tab_x_equilibrio_1/(tab_x_equilibrio_2*abs(tab_x_equilibrio_2))-tab_R_0)/(tab_C_d);
+tab.a = pi^2;
+tab.a_inv = 1/tab.a;
+tab.C_d = 2*pi^2;
+tab.R_0 = 45;
+tab.eta = 0.6;
+tab.W = 30;
+tab.omega_n = 1000;
+tab.A_n = 0.02;
+tab.B_n = 30;
+tab.T_a_1 = 0.3;
+tab.T_a_0 = 0.033;
+tab.x_equilibrio_1 = 10;
+tab.x_equilibrio_2 = 6;
+tab.x_equilibrio_3 = 6;
+tab.u_equilibrio = (tab.x_equilibrio_1/(tab.x_equilibrio_2*abs(tab.x_equilibrio_2))-tab.R_0)/(tab.C_d);
 
 %La costante g non è presente nella tabella:
-tab_g_const = 9.80655;
+tab.g_const = 9.80655;
 
 %Metto insieme la condizione di equilibrio dello stato:
 % tab_x_equilibrio = [tab_x_equilibrio_1, tab_x_equilibrio_2, tab_x_equilibrio_3];
@@ -66,7 +65,7 @@ s_perc = 0.05;
 
 %4 Il tempo di assestamento all'1% deve essere tenuto relativamente basso T_a_1 = 0.3 s
 %5 Devo abbattere i rumori n di 30 volte che in db =
-B_n_db = 20*log(tab_B_n);
+B_n_db = 20*log(tab.B_n);
 
 %Specifiche opzionali:
 
@@ -76,7 +75,7 @@ B_n_db = 20*log(tab_B_n);
 
 %Dato dal rumore di misura.
 %Dato che non ho vincoli di moderazione, questo rimane il vincolo più forte
-w_c_max=tab_omega_n; % 1000 rad/s
+omega_c_max=tab.omega_n; % 1000 rad/s
 %Limite superiore per la frequenza di attraversamento.
 
 %Viene ricavato dalla sovraelongazione con la formula classica.
@@ -90,7 +89,7 @@ Mf=xi*100; %69.0107
 %Calcolo la frequenza di attraversamento minimo attraverso la formula:
 %460/(Mf* T*) cioè 460/(69.011 * 0.3)
 %Questo limite inferiore è dettato dal tempo di assestamento.
-w_c_min=460/(Mf * tab_T_a_h_perc); % 22.2188 rad/s
+omega_c_min=460/(Mf * tab.T_a_1); % 22.2188 rad/s
 
 %Abbiamo individuato l'intervallo per la pulsazione di attraversamento 
 %w_c* [22.2188 rad/s, 1000 rad/s]
@@ -126,23 +125,23 @@ w_c_min=460/(Mf * tab_T_a_h_perc); % 22.2188 rad/s
 
 %A è una 3x3 perchè devo moltiplicare per le tre equazioni di stato 3x1 e 
 %deve saltare fuori un 3x1 quindi 3x3 * 3x1 = 3x1
-% A = [0, -(tab_g_const/tab_a),                                                                   (tab_g_const/tab_a);
-%      1, -(2*(tab_x_equilibrio_2^2)*(tab_C_d*tab_u_equilibrio+tab_R_0)/abs(tab_x_equilibrio_2)), 0;
-%      0, 0,                                                                                      0];
+A = [0, -(tab.g_const/tab.a),                                                                   (tab.g_const/tab.a);
+     1, -(2*(tab.x_equilibrio_2^2)*(tab.C_d*tab.u_equilibrio+tab.R_0)/abs(tab.x_equilibrio_2)), 0;
+     0, 0,                                                                                      0];
 
 %Consideriamo la pressione sul fondo costante.
-A = [0, 0,                                                                                      0;
-     1, -(2*(tab_x_equilibrio_2^2)*(tab_C_d*tab_u_equilibrio+tab_R_0)/abs(tab_x_equilibrio_2)), 0;
-     0, 0,                                                                                      0];
+% A = [0, 0,                                                                                      0;
+%      1, -(2*(tab.x_equilibrio_2^2)*(tab.C_d*tab.u_equilibrio+tab.R_0)/abs(tab.x_equilibrio_2)), 0;
+%      0, 0,                                                                                      0];
 
 %B è una 3x1 perchè deve moltiplicare per l'ingresso 1x1 e deve saltare
 %fuori una 3x1 quindi 3x1 * 1x1 = 3x1
 B = [0;
-     -(tab_C_d*tab_x_equilibrio_2*abs(tab_x_equilibrio_2));
+     -(tab.C_d*tab.x_equilibrio_2*abs(tab.x_equilibrio_2));
      0];
 
 %C è 1x3 perchè 1x3 * 3x1 = 1x1
-C = [-(tab_eta*tab_x_equilibrio_2), -(tab_eta*tab_x_equilibrio_1), 0];
+C = [-(tab.eta*tab.x_equilibrio_2), -(tab.eta*tab.x_equilibrio_1), 0];
 
 D = 0;
 
@@ -165,38 +164,37 @@ zpk(G)
 %Plot del diagramma di bode
 
 %Margini di visualizzazione del diagramma.
-w_plot_min=10^(-2);
-w_plot_max=10^5;
+omega_plot_min=10^(-2);
+omega_plot_max=10^5;
 
 %Ricavo il bode della G da plottare
-[Mag,phase,w]=bode(G,{w_plot_min,w_plot_max});
-
+[Mag_G,phase_G,omega_G]=bode(G,{omega_plot_min,omega_plot_max});
 
 %Nuova finestra grafica
-% figure();
-% 
-% %Vincolo sulla w_c_min
-% patch([w_plot_min,w_c_min,w_c_min,w_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0);
-% text(w_c_min-22,-100,'w_c^* >= 22.2188 rad/sec');
-% 
-% %Vincolo sulla w_c_max
-% hold on;
-% patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[200,200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
-% 
-% %Vincolo sull'attenuazione di n
-% hold on;
-% patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
-% 
-% %plotto G
-% hold on;
-% margin(Mag,phase,w);
-% 
-% %Vincolo sul margine di fase: -180Ḟ + arg(L(jw_c))
-% hold on;
-% %Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -270),
-% %(w_c_min, -270)
-% patch([w_c_min,w_c_max,w_c_max,w_c_min],[-180+Mf,-180+Mf,-270,-270],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
-% grid on;
+figure();
+
+%Vincolo sulla w_c_min
+patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0);
+text(omega_c_min-22,-100,'w_c^* >= 22.2188 rad/sec');
+
+%Vincolo sulla w_c_max
+hold on;
+patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[200,200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Vincolo sull'attenuazione di n
+hold on;
+patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%plotto G
+hold on;
+margin(Mag_G,phase_G,omega_G);
+
+%Vincolo sul margine di fase: -180Ḟ + arg(L(jw_c))
+hold on;
+%Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -270),
+%(w_c_min, -270)
+patch([omega_c_min,omega_c_max,omega_c_max,omega_c_min],[-180+Mf,-180+Mf,-270,-270],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
+grid on;
 
 
 
@@ -216,90 +214,141 @@ G_e = R_s*G;
 zpk(G_e)
 
 %Ricavo i dati sulla G_e
-[Mag_e,phase_e,w_e]=bode(G_e,{w_plot_min,w_plot_max});
+[Mag_G_e,phase_G_e,omega_G_e]=bode(G_e,{omega_plot_min,omega_plot_max});
 
 %Nuova finestra grafica.
 figure();
 
 %Vincolo sulla w_c_min
-patch([w_plot_min,w_c_min,w_c_min,w_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
 
 %Vincolo sulla w_c_max
 hold on;
-patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[120,120,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[120,120,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
 
 %Vincolo sull'attenuazione di n
 hold on;
-patch([w_plot_max,w_c_max,w_c_max,w_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
+patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
 
 
 %Plotto G_e
 hold on;
-bodeplot(G_e, {w_plot_min,w_plot_max});
-% margin(Mag_e,phase_e,w_e);
+bodeplot(G_e, {omega_plot_min,omega_plot_max});
+% margin(Mag_G_e,phase_G_e,omega_G_e);
 
 %Vincolo sul margine di fase: -180Ḟ + arg(L(jw_c))
 hold on;
 %Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -270),
 %(w_c_min, -270)
-patch([w_c_min,w_c_max,w_c_max,w_c_min],[-180+Mf,-180+Mf,-180,-180],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
+patch([omega_c_min,omega_c_max,omega_c_max,omega_c_min],[-180+Mf,-180+Mf,-180,-180],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
+
+%Dal grafico si deduce che siamo caduti in uno scenario B
 
 %%
 %Progettazione della rete regolatrice dinamica
 
 %Si tratta della frequenza di attraversamento scelta.
-omega_c_star = 150;
-Mf=79;
+omega_c_star_ant = 150;
+
+%Alzo il margine di fase per contrastare i due poli della rete ritardatrice
+%da progettare successivamente per rispettare il vincolo su n.
+Mf_ant=Mf+10;
 
 %Ricavo i dati di attraversamento di G_e
-[Mag_G_e_omega_c_star,phase_G_e_omega_c_star,omega_c_star]=bode(G_e, omega_c_star);
+[Mag_G_e_omega_c_star_ant,phase_G_e_omega_c_star_ant,omega_c_star_ant]=bode(G_e, omega_c_star_ant);
 
-Mag_G_e_omega_c_star_db = 20*log(Mag_G_e_omega_c_star);
+Mag_G_e_omega_c_star_ant_db = 20*log(Mag_G_e_omega_c_star_ant);
 
-M_star = 10^-(Mag_G_e_omega_c_star_db/20);
+M_star_ant = 10^-(Mag_G_e_omega_c_star_ant_db/20);
+phi_star_ant = Mf_ant-180-phase_G_e_omega_c_star_ant;
 
-phi_star = Mf-180-phase_G_e_omega_c_star;
+tau_rete_ant = (M_star_ant-cos(phi_star_ant*pi/180))/(omega_c_star_ant*sin(phi_star_ant*pi/180));
+tau_alpha_rete_ant = (cos(phi_star_ant*pi/180)-1/M_star_ant)/(omega_c_star_ant*sin(phi_star_ant*pi/180));
 
-tau_rete_anticipatrice = (M_star-cos(phi_star*pi/180))/(omega_c_star*sin(phi_star*pi/180));
-tau_alpha_rete_anticipatrice = (cos(phi_star*pi/180)-1/M_star)/(omega_c_star*sin(phi_star*pi/180));
-
-alpha_rete_anticipatrice = tau_alpha_rete_anticipatrice/tau_rete_anticipatrice;
+alpha_rete_ant = tau_alpha_rete_ant/tau_rete_ant;
 
 %Ricavo il regolatore dinamico (anticipatore).
-R_d_ant = 0.018*(1+s*tau_rete_anticipatrice)/(1+tau_alpha_rete_anticipatrice*s);
+R_d_ant = (1+s*tau_rete_ant)/(1+tau_alpha_rete_ant*s);
 
-%----------------------------------------------------------------------
+%Stampo il grafico per vedere in che scenario siamo caduti.
+G_e_1 = R_d_ant  * G_e;
+
+%Stampo gli zeri e i poli di G_e_1
+% zpk(G_e_1)
+
+%Ricavo i dati sulla G_e_1
+[Mag_G_e_1,phase_G_e_1,omega_G_e_1]=bode(G_e_1,{omega_plot_min,omega_plot_max});
+
+figure();
+%Vincolo sulla w_c_min
+patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Vincolo sulla w_c_max
+hold on;
+patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[120,120,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Vincolo sull'attenuazione di n
+hold on;
+patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Plotto G_e_1
+hold on;
+% bodeplot(G_e_1, {omega_plot_min,omega_plot_max});
+margin(Mag_G_e_1,phase_G_e_1,omega_G_e_1);
+
+%Vincolo sul margine di fase: -180Ḟ + arg(L(jw_c))
+hold on;
+%Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -270),
+%(w_c_min, -270)
+patch([omega_c_min,omega_c_max,omega_c_max,omega_c_min],[-180+Mf,-180+Mf,-180,-180],'green','FaceAlpha',0.2,'EdgeAlpha',0);
+
+%Siamo caduti in uno scenario A:
+%Dato che il guadagno è libero lo uso per correggere la rete.
+%Abbiamo calcolato il valore di mu attraverso il grafico di bode.
+
+omega_c_star_mu = 25;
+
+[Mag_G_e_1_omega_c_star_ant,phase_G_e_1_omega_c_star_mu,omega_c_star_mu]=bode(G_e_1, omega_c_star_mu);
+
+mu_d = 1/Mag_G_e_1_omega_c_star_ant;
+
+G_e_2 = mu_d * G_e_1;
+
+%Plotto G_e_2
+[Mag_G_e_2,phase_G_e_2,omega_G_e_2]=bode(G_e_2,{omega_plot_min,omega_plot_max});
+hold on;
+% bodeplot(G_e_2, {omega_plot_min,omega_plot_max});
+margin(Mag_G_e_2,phase_G_e_2,omega_G_e_2);
+
+%La specifica di attraversamento e margine di fase è rispettata, manca
+%solo il vincolo sulla n: uso una rete ritardatrice.
+%%
 %RETE RITARDATRICE PER RISOLUZIONE DI n(t)
-%Si tratta della frequenza di attraversamento scelta. NON FUNZIONA BOH
+%Si tratta della frequenza di inizio del polo.
 omega_c_star_rit = 150;
+alpha_rete_rit = 0.01;
 
 tau_rete_ritardatrice = 1/omega_c_star_rit;
-tau_alpha_rete_ritardatrice = 0.01 * tau_rete_ritardatrice;
+tau_alpha_rete_ritardatrice = alpha_rete_rit * tau_rete_ritardatrice;
 
 R_d_rit = (1+s*tau_alpha_rete_ritardatrice)^2/(1+tau_rete_ritardatrice*s)^2;
 
 
+%%
 %Calcolo L con aggiunta della rete ritardatrice
-L = R_d_rit * R_d_ant * G_e;
-
+L = mu_d * R_d_rit * R_d_ant * G_e;
 
 %Stampo gli zeri e i poli di L
 zpk(L)
 %Ricavo i dati sulla L
-[Mag_L,phase_L,w_L]=bode(L,{w_plot_min,w_plot_max});
-[Mag_L_omega_n,phase_L_omega_n,w_L_omega_n]=bode(L,tab_omega_n);
-Mag_L_omega_n_db = 20*log(Mag_L_omega_n);
+[Mag_L,phase_L,omega_L]=bode(L,{omega_plot_min,omega_plot_max});
 
 %Plotto L sul grafico precedente e la confronto con G_e
 hold on;
-margin(Mag_L,phase_L,w_L);
+margin(Mag_L,phase_L,omega_L);
 grid on;
 
 %Il grafico sembra reggere.
-
-%%
-%Regolatore finale
-R=R_s*R_d_ant;
 
 %%
 %Chiusura del loop
@@ -309,7 +358,7 @@ R=R_s*R_d_ant;
 F=L/(1+L);
 
 %Ricavo informazioni
-[Mag_F,phase_F,w_F]=bode(F,{w_plot_min,w_plot_max});
+[Mag_F,phase_F,w_F]=bode(F,{omega_plot_min,omega_plot_max});
 
 %Stampo gli zeri e i poli di F
 zpk(F)
