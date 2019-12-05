@@ -361,10 +361,19 @@ margin(Mag_G_e_2,phase_G_e_2,omega_G_e_2);
 
 
 %%
+
+%Calcolo R
+R = mu_d * R_d_ant * R_s;
+
+%Dati usati in simulink per la R.
+[NumR, DenR] = tfdata(R);
+NumR = NumR{1,1};
+DenR = DenR{1,1};
+
 %Calcolo L
 L = mu_d * R_d_ant * G_e;
 
-%Dati usati in simulink.
+%Dati usati in simulink per la L.
 [NumL, DenL] = tfdata(L);
 NumL = NumL{1,1};
 DenL = DenL{1,1};
