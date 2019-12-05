@@ -29,7 +29,7 @@ tab.T_a_1 = 0.3;
 tab.T_a_0 = 0.033;
 tab.x_equilibrio_1 = 10;
 tab.x_equilibrio_2 = 6;
-tab.x_equilibrio_3 = 7;
+tab.x_equilibrio_3 = 6;
 tab.u_equilibrio = (tab.x_equilibrio_1/(tab.x_equilibrio_2*abs(tab.x_equilibrio_2))-tab.R_0)/(tab.C_d);
 
 %La costante g non è presente nella tabella:
@@ -59,6 +59,9 @@ tab.g_const = 9.80655;
 
 %1 Errore a regime nullo con riferimento a gradino w(t) = W1(t)
 %2 Per garantire una certa robustezza del sistema si deve avere un margine di fase M_f* = 45 
+
+Mf=45;
+
 %3 Il sistema può accettare un sovraelongazione percentuale al massimo del 5% : S_% <= 5%
 
 s_perc = 0.05;
@@ -79,20 +82,23 @@ omega_c_max=tab.omega_n; % 1000 rad/s
 %Limite superiore per la frequenza di attraversamento.
 
 %Viene ricavato dalla sovraelongazione con la formula classica.
-xi=sqrt(log(s_perc)^2/(pi^2+log(s_perc)^2)); %0.6901
+xi=sqrt(log10(s_perc)^2/(pi^2+log10(s_perc)^2)); %0.6901
 
-%Mf>69.011° richiesta più limitatnte delle specifiche (Mf>45°).
+%Mf>38.2618° richiesta meno limitatnte delle specifiche (Mf>45°).
 %PROCEDIMENTO: calcolo xi con la formula inversa, poi calcolo il Mf e
 %valuto la condizione più restrittiva
-Mf=xi*100; %69.0107 
+Mf_s_perc=xi*100; %38.2618
+
+%Dato che le specifiche sono più stringenti uso quelle.
+%Mf = Mf_s_perc
 
 %Calcolo la frequenza di attraversamento minimo attraverso la formula:
-%460/(Mf* T*) cioè 460/(69.011 * 0.3)
+%460/(Mf* T*) cioè 460/(45 * 0.3)
 %Questo limite inferiore è dettato dal tempo di assestamento.
-omega_c_min=460/(Mf * tab.T_a_1); % 22.2188 rad/s
+omega_c_min=460/(Mf * tab.T_a_1); % 34.0741 rad/s
 
 %Abbiamo individuato l'intervallo per la pulsazione di attraversamento 
-%w_c* [22.2188 rad/s, 1000 rad/s]
+%omega_c_star [34.0741 rad/s, 1000 rad/s]
 
 %%
 %Linearizzazione del sistema
@@ -148,7 +154,6 @@ D = 0;
 %Per verificare il contenuto delle variabili globali uso la funzione disp
 %disp(A);
 
-
 %Definisco la funzione di traferimento
 s=tf('s');
 [Num,Den]=ss2tf(A,B,C,D);
@@ -173,13 +178,20 @@ omega_plot_max=10^5;
 %Nuova finestra grafica
 figure();
 
-%Vincolo sulla w_c_min
-patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0);
-text(omega_c_min-22,-100,'w_c^* >= 22.2188 rad/sec');
+%Vincolo sulla omega_c_min
+patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
 
-%Vincolo sulla w_c_max
+%Indico la frequenza di attraversamento minima
+hold on;
+text(omega_plot_min*10,-100, sprintf('w_c^*>=%.2f rad/sec', omega_c_min));
+
+%Vincolo sulla omega_c_max
 hold on;
 patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[200,200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Indico la frequenza di attraversamento massima
+hold on;
+text(omega_c_max*5,60, sprintf('w_c^*<=%.2f rad/sec', omega_c_max));
 
 %Vincolo sull'attenuazione di n
 hold on;
@@ -191,21 +203,15 @@ margin(Mag_G,phase_G,omega_G);
 
 %Vincolo sul margine di fase: -180° + arg(L(jw_c))
 hold on;
-%Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -270),
-%(w_c_min, -270)
-patch([omega_c_min,omega_c_max,omega_c_max,omega_c_min],[-180+Mf,-180+Mf,-270,-270],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
+%Coppie di punti (omega_c_min, -180+Mf), (omega_c_max, -180+Mf), 
+%(omega_c_max, -270), (omega_c_min, -270)
+patch([omega_c_min,omega_c_max,omega_c_max,omega_c_min],[-180+Mf,-180+Mf,-180,-180],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
 grid on;
-
-
-
-%-------------------------------------------------------------------------------------------------------------------------------------
-
 
 %%
 %Progettazione della rete regolatrice statica
 
-%Ho bisogno di un polo per il vincolo numero 1.
-%Volgio un e_inf = 0
+%Ho bisogno di un polo per il vincolo numero 1 (e_inf = 0)
 %Il guadagno statico resta libero: verrà modificato se necessario.
 R_s = 1/s;
 G_e = R_s*G;
@@ -219,17 +225,24 @@ zpk(G_e)
 %Nuova finestra grafica.
 figure();
 
-%Vincolo sulla w_c_min
+%Vincolo sulla omega_c_min
 patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
 
-%Vincolo sulla w_c_max
+%Indico la frequenza di attraversamento minima
 hold on;
-patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[120,120,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+text(omega_plot_min*10,-100, sprintf('w_c^*>=%.2f rad/sec', omega_c_min));
+
+%Vincolo sulla omega_c_max
+hold on;
+patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[200,200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Indico la frequenza di attraversamento massima
+hold on;
+text(omega_c_max*5,60, sprintf('w_c^*<=%.2f rad/sec', omega_c_max));
 
 %Vincolo sull'attenuazione di n
 hold on;
 patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
-
 
 %Plotto G_e
 hold on;
@@ -248,16 +261,16 @@ patch([omega_c_min,omega_c_max,omega_c_max,omega_c_min],[-180+Mf,-180+Mf,-180,-1
 %Progettazione della rete regolatrice dinamica
 
 %Si tratta della frequenza di attraversamento scelta.
-omega_c_star_ant = 150;
+omega_c_star_ant = 450;
 
 %Alzo il margine di fase per contrastare i due poli della rete ritardatrice
 %da progettare successivamente per rispettare il vincolo su n.
-Mf_ant=Mf+10;
+Mf_ant=Mf;
 
 %Ricavo i dati di attraversamento di G_e
 [Mag_G_e_omega_c_star_ant,phase_G_e_omega_c_star_ant,omega_c_star_ant]=bode(G_e, omega_c_star_ant);
 
-Mag_G_e_omega_c_star_ant_db = 20*log(Mag_G_e_omega_c_star_ant);
+Mag_G_e_omega_c_star_ant_db = 20*log10(Mag_G_e_omega_c_star_ant);
 
 M_star_ant = 10^-(Mag_G_e_omega_c_star_ant_db/20);
 phi_star_ant = Mf_ant-180-phase_G_e_omega_c_star_ant;
@@ -271,7 +284,7 @@ alpha_rete_ant = tau_alpha_rete_ant/tau_rete_ant;
 R_d_ant = (1+s*tau_rete_ant)/(1+tau_alpha_rete_ant*s);
 
 %Stampo il grafico per vedere in che scenario siamo caduti.
-G_e_1 = R_d_ant  * G_e;
+G_e_1 = R_d_ant * G_e;
 
 %Stampo gli zeri e i poli di G_e_1
 % zpk(G_e_1)
@@ -279,13 +292,23 @@ G_e_1 = R_d_ant  * G_e;
 %Ricavo i dati sulla G_e_1
 [Mag_G_e_1,phase_G_e_1,omega_G_e_1]=bode(G_e_1,{omega_plot_min,omega_plot_max});
 
+%Nuova finestra grafica
 figure();
-%Vincolo sulla w_c_min
+
+%Vincolo sulla omega_c_min
 patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
 
-%Vincolo sulla w_c_max
+%Indico la frequenza di attraversamento minima
 hold on;
-patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[120,120,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+text(omega_plot_min*10,-100, sprintf('w_c^*>=%.2f rad/sec', omega_c_min));
+
+%Vincolo sulla omega_c_max
+hold on;
+patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[200,200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Indico la frequenza di attraversamento massima
+hold on;
+text(omega_c_max*5,60, sprintf('w_c^*<=%.2f rad/sec', omega_c_max));
 
 %Vincolo sull'attenuazione di n
 hold on;
@@ -306,7 +329,7 @@ patch([omega_c_min,omega_c_max,omega_c_max,omega_c_min],[-180+Mf,-180+Mf,-180,-1
 %Dato che il guadagno è libero lo uso per correggere la rete.
 %Abbiamo calcolato il valore di mu attraverso il grafico di bode.
 
-omega_c_star_mu = 45;
+omega_c_star_mu = 75;
 
 [Mag_G_e_1_omega_c_star_ant,phase_G_e_1_omega_c_star_mu,omega_c_star_mu]=bode(G_e_1, omega_c_star_mu);
 
@@ -323,21 +346,25 @@ margin(Mag_G_e_2,phase_G_e_2,omega_G_e_2);
 %La specifica di attraversamento e margine di fase è rispettata, manca
 %solo il vincolo sulla n: uso una rete ritardatrice.
 %%
+%NOTA: questa rete non è più necessaria: avevamo sbagliato a calcolare
+%l'attenuazione in quanto matlab considera log come logaritmo naturale: in
+%realtà la specifica è molto meno stringente.
 %RETE RITARDATRICE PER RISOLUZIONE DI n(t)
 %Si tratta della frequenza di inizio del polo.
-omega_c_star_rit = 150;
-alpha_rete_rit = 0.01;
-
-tau_rete_ritardatrice = 1/omega_c_star_rit;
-tau_alpha_rete_ritardatrice = alpha_rete_rit * tau_rete_ritardatrice;
-
-R_d_rit = (1+s*tau_alpha_rete_ritardatrice)^2/(1+tau_rete_ritardatrice*s)^2;
+% omega_c_star_rit = 150;
+% alpha_rete_rit = 0.01;
+% 
+% tau_rete_ritardatrice = 1/omega_c_star_rit;
+% tau_alpha_rete_ritardatrice = alpha_rete_rit * tau_rete_ritardatrice;
+% 
+% R_d_rit = (1+s*tau_alpha_rete_ritardatrice)^2/(1+tau_rete_ritardatrice*s)^2;
 
 
 %%
-%Calcolo L con aggiunta della rete ritardatrice
+%Calcolo L
 L = mu_d * R_d_ant * G_e;
 
+%Dati usati in simulink.
 [NumL, DenL] = tfdata(L);
 NumL = NumL{1,1};
 DenL = DenL{1,1};
@@ -352,7 +379,11 @@ hold on;
 margin(Mag_L,phase_L,omega_L);
 grid on;
 
-%Il grafico sembra reggere.
+%Plotto il luogo delle radici in una nuova finestra grafica.
+figure();
+rlocus(L);
+
+%Il grafico sembra soddisfare le specifiche.
 
 %%
 %Chiusura del loop
@@ -368,14 +399,27 @@ F=L/(1+L);
 zpk(F)
 
 %Plotto F
-% figure();
-% margin(Mag_F,phase_F,w_F);
-% grid on;
+figure();
+margin(Mag_F,phase_F,w_F);
+grid on;
+
+%Impostazioni per il gradino: imposto un impulso di ampiezza W
+stepOption = stepDataOptions('StepAmplitude', tab.W);
+
+%Plotto la risposta a gradino
+figure();
+step(F, stepOption);
+
+%Per muovere il cursore:
+datacursormode on
 
 %Informazioni sullo step
-stepinfo(F)
+%Simulo di nuovo lo step ma in questo caso non plotto ma ricavo i dati:
+[Y_F,T_F] = step(F, stepOption);
+%Imposto un vincolo dell'1% sul tempo di assestamento e ricavo le info:
+F_stepinfo = stepinfo(Y_F, T_F,'SettlingTimeThreshold',0.01);
+disp(F_stepinfo);
 
-figure();
-step(F);
-
-
+%Dallo stepinfo abbiamo un Tempo di assestamento di 0.1583 sec e una
+%sovraelongazione percentuale di 2.32%, valori al di sotto dei vincoli:
+%inoltre la specifica opzionale di tempo di assestamento è stata risolta.
