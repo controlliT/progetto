@@ -29,7 +29,7 @@ tab.T_a_1 = 0.3;
 tab.T_a_0 = 0.033;
 tab.x_equilibrio_1 = 10;
 tab.x_equilibrio_2 = 6;
-tab.x_equilibrio_3 = 6;
+% tab.x_equilibrio_3 = 6;
 tab.u_equilibrio = (tab.x_equilibrio_1/(tab.x_equilibrio_2*abs(tab.x_equilibrio_2))-tab.R_0)/(tab.C_d);
 
 %La costante g non è presente nella tabella:
@@ -43,29 +43,21 @@ tab.g_const = 9.80655;
 
 %x_1: la pressione dell'acqua sul fondo del bacino.
 %x_2: la portata in uscita dal bacino.
-%x_3: la portata in ingresso allo stesso.
+%x_3: la portata in ingresso allo stesso. (NON c'è più)
 
 %L'uscita del sistema viene rappresentata dalla variabile y:
 %y: rappresenta l'energia elettrica generata attraverso la turbina.
 %y= -eta*x_1*x_2
 
 %Forma di stato:
-%x_dot_1 = (g/a)*(-x_2+x_3)
+%x_dot_1 = 0
 %x_dot_2 = -C_d*u*x_2*|x_2|-R_0*x_2*|x_2|+x_1
-%x_dot_3 = 0
+%x_dot_3 = 0 ( NON c'è più)
  
 %%
 %Specifiche di progetto
 
 %1 Errore a regime nullo con riferimento a gradino w(t) = W1(t)
-
-%Non posso soddisfare questa specifica: il polo all'origine verrà
-%influenzato dallo zero a parte reale positiva, rendendo instabile l'anello
-%chiuso.
-
-%Quindi imposto un errore a regime minore di 0.1.
-E_regime = 0.1;
-
 %2 Per garantire una certa robustezza del sistema si deve avere un margine di fase M_f* = 45 
 
 Mf=45;
@@ -111,9 +103,6 @@ omega_c_min=460/(Mf * tab.T_a_1); % 34.0741 rad/s
 %%
 %Linearizzazione del sistema
 
-%Ridefinisco la prima equazione di stato:
-%x_dot_1 = -(g/a) x_2 + (g/a) x_3
-
 %Ridefinisco la seconda equazione di stato:
 %x_dot_2 = x_1 -(C_d*u+R_0) x_2*|x_2|
 %x_dot_2 = x_1 -(R_0*|x_2|) x_2 - (C_d*x_2*|x_2|) u
@@ -126,7 +115,7 @@ omega_c_min=460/(Mf * tab.T_a_1); % 34.0741 rad/s
 %y= -(eta*x_1) x_2
 
 %Punto di equilibrio dove linearizzare il sistema:
-%x_equilibrio = (10,6,6)
+%x_equilibrio = (10,6)
 %u_equilibrio = (-2.265654245335609)
 
 %Applico la serie di Taylor per linearizzare il sistema:
@@ -139,7 +128,12 @@ omega_c_min=460/(Mf * tab.T_a_1); % 34.0741 rad/s
 
 %A è una 3x3 perchè devo moltiplicare per le tre equazioni di stato 3x1 e 
 %deve saltare fuori un 3x1 quindi 3x3 * 3x1 = 3x1
-A = [0, -(tab.g_const/tab.a),                                                                   (tab.g_const/tab.a);
+% A = [0, -(tab.g_const/tab.a),                                                                   (tab.g_const/tab.a);
+%      1, -(2*(tab.x_equilibrio_2^2)*(tab.C_d*tab.u_equilibrio+tab.R_0)/abs(tab.x_equilibrio_2)), 0;
+%      0, 0,                                                                                      0];
+
+%Consideriamo la pressione sul fondo costante.
+A = [0, 0,                                                                                      0;
      1, -(2*(tab.x_equilibrio_2^2)*(tab.C_d*tab.u_equilibrio+tab.R_0)/abs(tab.x_equilibrio_2)), 0;
      0, 0,                                                                                      0];
 
@@ -209,14 +203,9 @@ grid on;
 %%
 %Progettazione della rete regolatrice statica
 
-%Guardo il luogo delle radici
-figure();
-rlocus(G);
- 
-% Ho un limite molto forte sul guadagno:  circa 0.00039, -68,18 db
-
-%Imposto un regolatore senza polo per evitare instabilità.
-R_s = 0.00039;
+%Ho bisogno di un polo per il vincolo numero 1 (e_inf = 0)
+%Il guadagno statico resta libero: verrà modificato se necessario.
+R_s = 1/s;
 G_e = R_s*G;
 
 %Stampo gli zeri e i poli di G_e 
@@ -249,7 +238,8 @@ patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[-B_n_db,-B_n_db,0
 
 %Plotto G_e
 hold on;
-margin(Mag_G_e,phase_G_e,omega_G_e);
+bodeplot(G_e, {omega_plot_min,omega_plot_max});
+% margin(Mag_G_e,phase_G_e,omega_G_e);
 
 %Vincolo sul margine di fase: -180° + arg(L(jw_c))
 hold on;
@@ -257,33 +247,109 @@ hold on;
 %(w_c_min, -270)
 patch([omega_c_min,omega_c_max,omega_c_max,omega_c_min],[-180+Mf,-180+Mf,-180,-180],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
 
+%Dal grafico si deduce che siamo caduti in uno scenario B
 
-%Dal grafico si vede che  G_e sta sotto lo 0db, non ho più un
-%attraversamento. Non so come progettare la rete dinamica.
-%Però posso vedere cosa succede attraverso il luogo delle radici.
+%%
+%Progettazione della rete regolatrice dinamica
 
+%Si tratta della frequenza di attraversamento scelta.
+omega_c_star_ant = 200;
+
+%Alzo il margine di fase per contrastare i due poli della rete ritardatrice
+%da progettare successivamente per rispettare il vincolo su n.
+Mf_ant=Mf;
+
+%Ricavo i dati di attraversamento di G_e
+[Mag_G_e_omega_c_star_ant,phase_G_e_omega_c_star_ant,omega_c_star_ant]=bode(G_e, omega_c_star_ant);
+
+Mag_G_e_omega_c_star_ant_db = 20*log10(Mag_G_e_omega_c_star_ant);
+
+M_star_ant = 10^-(Mag_G_e_omega_c_star_ant_db/20);
+phi_star_ant = Mf_ant-180-phase_G_e_omega_c_star_ant;
+
+tau_rete_ant = (M_star_ant-cos(phi_star_ant*pi/180))/(omega_c_star_ant*sin(phi_star_ant*pi/180));
+tau_alpha_rete_ant = (cos(phi_star_ant*pi/180)-1/M_star_ant)/(omega_c_star_ant*sin(phi_star_ant*pi/180));
+
+alpha_rete_ant = tau_alpha_rete_ant/tau_rete_ant;
+
+%Ricavo il regolatore dinamico (anticipatore).
+R_d_ant = (1+s*tau_rete_ant)/(1+tau_alpha_rete_ant*s);
+
+%Stampo il grafico per vedere in che scenario siamo caduti.
+G_e_1 = R_d_ant * G_e;
+
+%Stampo gli zeri e i poli di G_e_1
+% zpk(G_e_1)
+
+%Ricavo i dati sulla G_e_1
+[Mag_G_e_1,phase_G_e_1,omega_G_e_1]=bode(G_e_1,{omega_plot_min,omega_plot_max});
+
+%Nuova finestra grafica
 figure();
-rlocus(G_e);
 
-%Calcolo la retta di attraversamento del tempo di assestamento.
-retta_T = 4.6 * tab.T_a_1;
+%Vincolo sulla omega_c_min
+patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
 
-%Il polo vicino all'origine non soddisfa la specifica, dovrei spostarlo a
-%sinistra ma c'è l'influenza dello zero reale positivo.
+%Indico la frequenza di attraversamento minima
+hold on;
+text(omega_plot_min*10,-100, sprintf('w_c^*>=%.2f rad/sec', omega_c_min));
 
+%Vincolo sulla omega_c_max
+hold on;
+patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[200,200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Indico la frequenza di attraversamento massima
+hold on;
+text(omega_c_max*5,60, sprintf('w_c^*<=%.2f rad/sec', omega_c_max));
+
+%Vincolo sull'attenuazione di n
+hold on;
+patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Plotto G_e_1
+hold on;
+% bodeplot(G_e_1, {omega_plot_min,omega_plot_max});
+margin(Mag_G_e_1,phase_G_e_1,omega_G_e_1);
+
+%Vincolo sul margine di fase: -180° + arg(L(jw_c))
+hold on;
+%Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -270),
+%(w_c_min, -270)
+patch([omega_c_min,omega_c_max,omega_c_max,omega_c_min],[-180+Mf,-180+Mf,-180,-180],'green','FaceAlpha',0.2,'EdgeAlpha',0);
+
+%Siamo caduti in uno scenario A:
+%Dato che il guadagno è libero lo uso per correggere la rete.
+%Abbiamo calcolato il valore di mu attraverso il grafico di bode.
+
+%TODO: riprogettare mu_d in modo che conti solo l'attenuazione di n
+
+omega_c_star_mu = 75;
+
+[Mag_G_e_1_omega_c_star_ant,phase_G_e_1_omega_c_star_mu,omega_c_star_mu]=bode(G_e_1, omega_c_star_mu);
+
+mu_d = 1/Mag_G_e_1_omega_c_star_ant;
+mu_d = 0.2; %Da rimuovere
+
+G_e_2 = mu_d * G_e_1;
+
+%Plotto G_e_2
+% [Mag_G_e_2,phase_G_e_2,omega_G_e_2]=bode(G_e_2,{omega_plot_min,omega_plot_max});
+% hold on;
+% % bodeplot(G_e_2, {omega_plot_min,omega_plot_max});
+% margin(Mag_G_e_2,phase_G_e_2,omega_G_e_2);
 
 %%
 
 %Calcolo R
-R = R_s;
+R = mu_d * R_d_ant * R_s;
 
 %Dati usati in simulink per la R.
-% [NumR, DenR] = tfdata(R);
-% NumR = NumR{1,1};
-% DenR = DenR{1,1};
+[NumR, DenR] = tfdata(R);
+NumR = NumR{1,1};
+DenR = DenR{1,1};
 
 %Calcolo L
-L = R * G;
+L = mu_d * R_d_ant * G_e;
 
 %Dati usati in simulink per la L.
 [NumL, DenL] = tfdata(L);
@@ -296,9 +362,15 @@ DenL = DenL{1,1};
 [Mag_L,phase_L,omega_L]=bode(L,{omega_plot_min,omega_plot_max});
 
 %Plotto L sul grafico precedente e la confronto con G_e
-% figure();
-% margin(Mag_L,phase_L,omega_L);
-% grid on;
+hold on;
+margin(Mag_L,phase_L,omega_L);
+grid on;
+
+%Plotto il luogo delle radici in una nuova finestra grafica.
+figure();
+rlocus(L);
+
+%Il grafico sembra soddisfare le specifiche.
 
 %%
 %Chiusura del loop
@@ -326,7 +398,7 @@ figure();
 step(F, stepOption);
 
 %Per muovere il cursore:
-% datacursormode on
+datacursormode on
 
 %Informazioni sullo step
 %Simulo di nuovo lo step ma in questo caso non plotto ma ricavo i dati:
@@ -335,6 +407,6 @@ step(F, stepOption);
 F_stepinfo = stepinfo(Y_F, T_F,'SettlingTimeThreshold',0.01);
 disp(F_stepinfo);
 
-%Stampo il luogo delle radici di F
-figure();
-rlocus(F);
+%Dallo stepinfo abbiamo un Tempo di assestamento di 0.1583 sec e una
+%sovraelongazione percentuale di 2.32%, valori al di sotto dei vincoli:
+%inoltre la specifica opzionale di tempo di assestamento è stata risolta.
