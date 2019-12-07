@@ -2,6 +2,7 @@
 
 %Progetto di Controlli Automatici - T
 %Tipologia III variante A: Controllo di un sistema idroelettrico con condotta forzata
+%Specifiche vecchie.
 
 %Gruppo:
 %Andrea Proia 0000825784
