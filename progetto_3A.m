@@ -36,8 +36,6 @@ tab.u_equilibrio = (tab.x_equilibrio_1/(tab.x_equilibrio_2*abs(tab.x_equilibrio_
 %La costante g non è presente nella tabella:
 tab.g_const = 9.80655;
 
-%Metto insieme la condizione di equilibrio dello stato:
-% tab_x_equilibrio = [tab_x_equilibrio_1, tab_x_equilibrio_2, tab_x_equilibrio_3];
 
 %Definizione del sistema:
 %Il sistema è formato da tre variabili di stato:
@@ -64,9 +62,6 @@ tab.g_const = 9.80655;
 %influenzato dallo zero a parte reale positiva, rendendo instabile l'anello
 %chiuso.
 
-%Quindi imposto un errore a regime minore di 0.1.
-E_regime = 0.1;
-
 %2 Per garantire una certa robustezza del sistema si deve avere un margine di fase M_f* = 45 
 
 Mf=45;
@@ -91,12 +86,12 @@ omega_c_max=tab.omega_n; % 1000 rad/s
 %Limite superiore per la frequenza di attraversamento.
 
 %Viene ricavato dalla sovraelongazione con la formula classica.
-xi=sqrt(log10(s_perc)^2/(pi^2+log10(s_perc)^2)); %0.6901
+xi=sqrt(log(s_perc)^2/(pi^2+log(s_perc)^2)); %0.6901
 
 %Mf>38.2618° richiesta meno limitatnte delle specifiche (Mf>45°).
 %PROCEDIMENTO: calcolo xi con la formula inversa, poi calcolo il Mf e
 %valuto la condizione più restrittiva
-Mf_s_perc=xi*100; %38.2618
+Mf_s_perc=xi*100; %69.01
 
 %Dato che le specifiche sono più stringenti uso quelle.
 %Mf = Mf_s_perc
@@ -162,180 +157,153 @@ D = 0;
 s=tf('s');
 [Num,Den]=ss2tf(A,B,C,D);
 G=tf(Num,Den);
+
 %Stampo G
 zpk(G)
 
-%Plot del diagramma di bode
+%Noto uno zero a parte reale positiva
+
+%Imposto un regolatore con un polo nell'origine per rispettare il vincolo
+%e_inf=0
+R_s = 1/s;
+G_e = R_s*G;
+
+%Stampo gli zeri e i poli di G_e 
+zpk(G_e)
+
+%Guardo il luogo delle radici
+figure(1);
+rlocus(G_e);
+title("Luogo delle radici, regolatore Rs=1/s)");
+
+%Calcolo la retta di attraversamento del tempo di assestamento.
+retta_T = 4.6 * tab.T_a_1;
+
+hold on;
+plot([-retta_T, -retta_T], [-10, 10]);
+
+grid on;
+
+%Commento finale:
+%Per rispettare il vincolo di tempo di assestamento dovrei impostare un
+%guadagno dinamico di almeno 0.000289 ma così facendo sposto il polo
+%nell'origine nella parte a destra dell'asse immaginario, rendendo
+%instabile il sistema. Dovrei violare il vincolo e_inf = 0 per avere un
+%margine molto basso sul guadagno: ho comunque un polo vicino allo zero.
+%Quindi non è detto che riesca a regolare comunque la rete con il livello
+%di conoscenza attuale.
+
+%Se imposto un regolatore statico senza polo:
+
+R_s = 1;
+G_e = R_s*G;
+
+%Stampo gli zeri e i poli di G_e 
+zpk(G_e)
+
+%Guardo il luogo delle radici
+figure(2);
+rlocus(G_e);
+title("Luogo delle radici, regolatore Rs=1)");
+
+%Calcolo la retta di attraversamento del tempo di assestamento.
+retta_T = 4.6 * tab.T_a_1;
+
+hold on;
+plot([-retta_T, -retta_T], [-10, 10]);
+
+grid on;
+
+%Ho bisogno di una rete anticipatrice per cancellare il polo in -0.33
+
+alpha_rete_ant = 0.001;
+tau_rete_ant = 1/0.33;
+tau_alpha_rete_ant = tau_rete_ant*alpha_rete_ant;
+
+%Ricavo il regolatore dinamico (anticipatore).
+R_d_ant = (1+s*tau_rete_ant)/(1+tau_alpha_rete_ant*s);
+
+G_e_1 = R_d_ant * G_e;
+
+
+%Guardo il luogo delle radici
+figure(3);
+rlocus(G_e_1);
+title("Luogo delle radici G_e = Rd * Rs * G");
+
+%Calcolo la retta di attraversamento del tempo di assestamento.
+retta_T = 4.6 * tab.T_a_1;
+
+hold on;
+plot([-retta_T, -retta_T], [-10, 10]);
+
+grid on;
+
+%Devo abbassare di parecchio il guadagno.
+mu_d = 0.000055;
+
+L = mu_d * G_e_1;
+
+%Vendo come si comporta F
+F=L/(1+L);
+
+zpk(F)
+
+figure(4);
+pzmap(F);
+title("Zeri e poli di F");
+grid on;
 
 %Margini di visualizzazione del diagramma.
 omega_plot_min=10^(-2);
 omega_plot_max=10^5;
 
 %Ricavo il bode della G da plottare
-[Mag_G,phase_G,omega_G]=bode(G,{omega_plot_min,omega_plot_max});
-
-%Nuova finestra grafica
-figure();
-
-%Vincolo sulla omega_c_min
-patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
-
-%Indico la frequenza di attraversamento minima
-hold on;
-text(omega_plot_min*10,-100, sprintf('w_c^*>=%.2f rad/sec', omega_c_min));
-
-%Vincolo sulla omega_c_max
-hold on;
-patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[200,200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
-
-%Indico la frequenza di attraversamento massima
-hold on;
-text(omega_c_max*5,60, sprintf('w_c^*<=%.2f rad/sec', omega_c_max));
-
-%Vincolo sull'attenuazione di n
-hold on;
-patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
-
-%plotto G
-hold on;
-margin(Mag_G,phase_G,omega_G);
-
-%Vincolo sul margine di fase: -180° + arg(L(jw_c))
-hold on;
-%Coppie di punti (omega_c_min, -180+Mf), (omega_c_max, -180+Mf), 
-%(omega_c_max, -270), (omega_c_min, -270)
-patch([omega_c_min,omega_c_max,omega_c_max,omega_c_min],[-180+Mf,-180+Mf,-180,-180],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
-grid on;
-
-%%
-%Progettazione della rete regolatrice statica
-
-%Guardo il luogo delle radici
-figure();
-rlocus(G);
- 
-% Ho un limite molto forte sul guadagno:  circa 0.00039, -68,18 db
-
-%Imposto un regolatore senza polo per evitare instabilità.
-R_s = 0.00039;
-G_e = R_s*G;
-
-%Stampo gli zeri e i poli di G_e 
-zpk(G_e)
-
-%Ricavo i dati sulla G_e
-[Mag_G_e,phase_G_e,omega_G_e]=bode(G_e,{omega_plot_min,omega_plot_max});
-
-%Nuova finestra grafica.
-figure();
-
-%Vincolo sulla omega_c_min
-patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
-
-%Indico la frequenza di attraversamento minima
-hold on;
-text(omega_plot_min*10,-100, sprintf('w_c^*>=%.2f rad/sec', omega_c_min));
-
-%Vincolo sulla omega_c_max
-hold on;
-patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[200,200,0,0],'yellow','FaceAlpha',0.3,'EdgeAlpha',0); 
-
-%Indico la frequenza di attraversamento massima
-hold on;
-text(omega_c_max*5,60, sprintf('w_c^*<=%.2f rad/sec', omega_c_max));
-
-%Vincolo sull'attenuazione di n
-hold on;
-patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
-
-%Plotto G_e
-hold on;
-margin(Mag_G_e,phase_G_e,omega_G_e);
-
-%Vincolo sul margine di fase: -180° + arg(L(jw_c))
-hold on;
-%Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -270),
-%(w_c_min, -270)
-patch([omega_c_min,omega_c_max,omega_c_max,omega_c_min],[-180+Mf,-180+Mf,-180,-180],'green','FaceAlpha',0.2,'EdgeAlpha',0); 
-
-
-%Dal grafico si vede che  G_e sta sotto lo 0db, non ho più un
-%attraversamento. Non so come progettare la rete dinamica.
-%Però posso vedere cosa succede attraverso il luogo delle radici.
-
-figure();
-rlocus(G_e);
-
-%Calcolo la retta di attraversamento del tempo di assestamento.
-retta_T = 4.6 * tab.T_a_1;
-
-%Il polo vicino all'origine non soddisfa la specifica, dovrei spostarlo a
-%sinistra ma c'è l'influenza dello zero reale positivo.
-
-
-%%
-
-%Calcolo R
-R = R_s;
-
-%Dati usati in simulink per la R.
-% [NumR, DenR] = tfdata(R);
-% NumR = NumR{1,1};
-% DenR = DenR{1,1};
-
-%Calcolo L
-L = R * G;
-
-%Dati usati in simulink per la L.
-[NumL, DenL] = tfdata(L);
-NumL = NumL{1,1};
-DenL = DenL{1,1};
-
-%Stampo gli zeri e i poli di L
-
-%Ricavo i dati sulla L
+[Mag_F,phase_F,omega_F]=bode(F,{omega_plot_min,omega_plot_max});
 [Mag_L,phase_L,omega_L]=bode(L,{omega_plot_min,omega_plot_max});
 
-%Plotto L sul grafico precedente e la confronto con G_e
-% figure();
-% margin(Mag_L,phase_L,omega_L);
+figure(5);
+
+
+% %Vincolo sulla omega_c_min
+% patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
+% 
+% %Indico la frequenza di attraversamento minima
+% hold on;
+% text(omega_plot_min*10,-100, sprintf('w_c^*>=%.2f rad/sec', omega_c_min));
+
+%Vincolo sulla omega_c_max
+hold on;
+patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[200,200,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Indico la frequenza di attraversamento massima
+hold on;
+text(omega_c_max*5,60, sprintf('w_c^*<=%.2f rad/sec', omega_c_max));
+
+%Vincolo sull'attenuazione di n
+hold on;
+patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%plotto F
+hold on;
+margin(Mag_F,phase_F,omega_F);
+
+%plotto L
+hold on;
+margin(Mag_L,phase_L,omega_L);
+
+title("Bode di L e F con vincoli");
+
+% %Vincolo sul margine di fase: -180° + arg(L(jw_c))
+% hold on;
+% %Coppie di punti (omega_c_min, -180+Mf), (omega_c_max, -180+Mf), 
+% %(omega_c_max, -270), (omega_c_min, -270)
+% patch([omega_c_min,omega_c_max,omega_c_max,omega_c_min],[-180+Mf,-180+Mf,-180,-180],'red','FaceAlpha',0.2,'EdgeAlpha',0); 
 % grid on;
-
-%%
-%Chiusura del loop
-
-%Chiudo il loop: F
-
-F=L/(1+L);
-
-%Ricavo informazioni
-[Mag_F,phase_F,w_F]=bode(F,{omega_plot_min,omega_plot_max});
-
-%Stampo gli zeri e i poli di F
-zpk(F)
-
-%Plotto F
-figure();
-margin(Mag_F,phase_F,w_F);
-grid on;
 
 %Impostazioni per il gradino: imposto un impulso di ampiezza W
 stepOption = stepDataOptions('StepAmplitude', tab.W);
-
-%Plotto la risposta a gradino
-figure();
-step(F, stepOption);
-
-%Per muovere il cursore:
-% datacursormode on
-
-%Informazioni sullo step
-%Simulo di nuovo lo step ma in questo caso non plotto ma ricavo i dati:
-[Y_F,T_F] = step(F, stepOption);
-%Imposto un vincolo dell'1% sul tempo di assestamento e ricavo le info:
-F_stepinfo = stepinfo(Y_F, T_F,'SettlingTimeThreshold',0.01);
-disp(F_stepinfo);
-
-%Stampo il luogo delle radici di F
-figure();
-rlocus(F);
+figure(6);
+step(F, stepDataOptions);
+title("Risposta al gradino (W) di F");
+grid on;
