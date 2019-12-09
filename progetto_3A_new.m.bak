@@ -1,0 +1,226 @@
+%%
+%--Introduzione--
+
+%Progetto di Controlli Automatici - T
+%Tipologia III variante A: Controllo di un sistema idroelettrico con condotta forzata
+%Nuova versione con le specifiche nuove.
+
+%Gruppo:
+%Andrea Proia 0000825784
+%Federico Maria Macchiavelli 0000825621
+%Mattia Innocenti 0000825046
+%Luca Bartolomei 0000825005
+
+
+%%
+%--Caratteristiche impianto--
+
+%Si tratta di un sistema SISO.
+
+%Tabella delle caratteristiche:
+tab.C_d = 2*pi^2;
+tab.R_0 = 45;
+tab.eta = 0.6;
+tab.W = 30;
+tab.omega_n = 1000;
+tab.A_n = 0.02;
+tab.B_n = 30;
+tab.T_a_1 = 0.3;
+tab.T_a_0 = 0.033;
+tab.x_equilibrio_1 = 10;
+tab.x_equilibrio_2 = 6;
+tab.u_equilibrio = (tab.x_equilibrio_1/(tab.x_equilibrio_2*abs(tab.x_equilibrio_2))-tab.R_0)/(tab.C_d);
+
+%Definizione del sistema:
+%Il sistema è formato da due variabili di stato:
+
+%x_1: la pressione dell'acqua sul fondo del bacino. Consideriamo la 
+%pressione sul fondo costante.
+%x_2: la portata in uscita dal bacino.
+
+%L'uscita del sistema viene rappresentata dalla variabile y:
+%y: rappresenta l'energia elettrica generata attraverso la turbina.
+%y= -eta*x_1*x_2
+
+%Forma di stato:
+%x_dot_1 = 0
+%x_dot_2 = -C_d*u*x_2*|x_2|-R_0*x_2*|x_2|+x_1
+ 
+%%
+%--Specifiche di progetto--
+
+%1 Errore a regime nullo con riferimento a gradino w(t) = W1(t)
+%2 Per garantire una certa robustezza del sistema si deve avere un margine di fase M_f* = 45 
+
+% Mf=45;
+
+%3 Il sistema può accettare un sovraelongazione percentuale al massimo del 5% : S_% <= 5%
+
+s_perc = 0.05;
+
+%4 Il tempo di assestamento all'1% deve essere tenuto relativamente basso T_a_1 = 0.3 s
+%5 Devo abbattere i rumori n di 30 volte che in db =
+B_n_db = 20*log10(tab.B_n);
+
+%Specifiche opzionali:
+
+%1 Il tempo di assestamento all'1% deve essere tenuto a 0.033 s
+
+%Introduco i vincoli indiretti:
+
+%Dato dal rumore di misura.
+%Dato che non ho vincoli di moderazione, questo rimane il vincolo più forte
+omega_c_max=tab.omega_n; % 1000 rad/s
+%Limite superiore per la frequenza di attraversamento.
+
+%Viene ricavato dalla sovraelongazione con la formula classica.
+%Ocio: qui va lasciato il log normale
+xi=sqrt(log(s_perc)^2/(pi^2+log(s_perc)^2)); %0.6901
+
+%PROCEDIMENTO: calcolo xi con la formula inversa, poi calcolo il Mf e
+%valuto la condizione più restrittiva
+Mf_s_perc=xi*100; %69.01 
+
+%Mf>69.01 gradi richiesta più limitatnte delle specifiche (Mf>45 gradi).
+Mf = Mf_s_perc;
+
+%Calcolo la frequenza di attraversamento minima attraverso la formula:
+%460/(Mf* T*) cioè 460/(45 * 0.3)
+%Questo limite inferiore è dettato dal tempo di assestamento.
+
+%ATTENZIONE: può subire variazioni in quanto va tenuto in conto Mf del
+%sistema in retroazione (F).
+omega_c_min = 460/(Mf * tab.T_a_1); 
+
+%Calcolo la frequenza di attraversamento minima opzionale:
+%ATTENZIONE: può subire variazioni in quanto va tenuto in conto Mf del
+%sistema in retroazione (F).
+omega_c_min_fac = 460/(Mf * tab.T_a_0); 
+
+%Calcolo anche l'asse di specifica del tempo di assestamento all'1%
+T_axis = 4.6 / tab.T_a_1;
+T_axis_fac = 4.6 / tab.T_a_0;
+
+%Abbiamo individuato l'intervallo per la pulsazione di attraversamento 
+fprintf('Range di attraversamento obbligatorio [%.2f rad/s, %.2f rad/s]\n', omega_c_min, omega_c_max);
+%Versione opzionale:
+fprintf('Range di attraversamento opzionale [%.2f rad/s, %.2f rad/s]\n', omega_c_min_fac, omega_c_max);
+
+%%
+%Impostazioni per il gradino: imposto un impulso di ampiezza W
+stepOption = stepDataOptions('StepAmplitude', tab.W);
+
+%Margini di visualizzazione del diagramma.
+omega_plot_min=10^(-2);
+omega_plot_max=10^5;
+
+%%
+%--Linearizzazione del sistema--
+
+%Ridefinisco la seconda equazione di stato:
+%x_dot_2 = x_1 -(C_d*u+R_0) x_2*|x_2|
+%x_dot_2 = x_1 -(R_0*|x_2|) x_2 - (C_d*x_2*|x_2|) u
+
+%La derivata di x_2 in x_dot_2 non è immediata:
+%d/dx_2 (x_1 -(C_d*u+R_0) x_2*|x_2|) = -(2(x_2)^2(C_d*u+R_0))/|x_2|
+
+%Ridefinisco y
+%y= -(eta*x_2) x_1
+%y= -(eta*x_1) x_2
+
+%Punto di equilibrio dove linearizzare il sistema:
+%x_equilibrio = (10,6)
+%u_equilibrio = (-2.265654245335609)
+
+%Applico la serie di Taylor per linearizzare il sistema:
+%A = 0 + d/dx (x_dot)|x=x_equilibrio, u=u_equilibrio
+%B = 0 + d/du (x_dot)|x=x_equilibrio, u=u_equilibrio
+%C = 0 + d/dx (y)|x=x_equilibrio, u=u_equilibrio
+%D = 0 + d/du (y)|x=x_equilibrio, u=u_equilibrio
+
+%Definiamo le matrici A,B,C,D derivabili dalla forma di stato e dall'uscita
+
+%A è una 3x3 perchè devo moltiplicare per le tre equazioni di stato 3x1 e 
+%deve saltare fuori un 3x1 quindi 3x3 * 3x1 = 3x1
+A = [0, 0,                                                                                    ;
+     1, -(2*(tab.x_equilibrio_2^2)*(tab.C_d*tab.u_equilibrio+tab.R_0)/abs(tab.x_equilibrio_2))];
+
+%B è una 3x1 perchè deve moltiplicare per l'ingresso 1x1 e deve saltare
+%fuori una 3x1 quindi 3x1 * 1x1 = 3x1
+B = [0;
+     -(tab.C_d*tab.x_equilibrio_2*abs(tab.x_equilibrio_2))];
+
+%C è 1x3 perchè 1x3 * 3x1 = 1x1
+C = [-(tab.eta*tab.x_equilibrio_2), -(tab.eta*tab.x_equilibrio_1)];
+
+D = 0;
+
+%Per verificare il contenuto delle variabili globali uso la funzione disp
+%disp(A);
+
+%Definisco la funzione di traferimento
+s=tf('s');
+[NumG,DenG]=ss2tf(A,B,C,D);
+G=tf(NumG,DenG);
+
+%Ricavo il bode della G da plottare
+[mag_G,phase_G,omega_G]=bode(G,{omega_plot_min,omega_plot_max});
+
+%Stampo G
+zpk(G)
+
+%Chiusura di G senza il regolatore
+CG = G/(1+G);
+
+%Ricavo il bode della G chiusa da plottare
+[mag_CG,phase_CG,omega_CG]=bode(CG,{omega_plot_min,omega_plot_max});
+
+%Stampo la risposta al gradino di G in closed loop
+figure(1);
+step(CG, stepOption);
+title(sprintf("Risposta al gradino (W=%d) di G in anello chiuso", tab.W));
+legend("CG");
+grid on;
+
+%Informazioni sullo step
+%Simulo di nuovo lo step ma in questo caso non plotto ma ricavo i dati:
+[Y_CG,T_CG] = step(CG, stepOption);
+%Imposto un vincolo dell'1% sul tempo di assestamento e ricavo le info:
+CG_stepinfo = stepinfo(Y_CG, T_CG,'SettlingTimeThreshold',0.01);
+disp(CG_stepinfo);
+
+%Si intravede un piccolo errore a regime trascurabile. Non sappiamo se
+%attenua il rumore di misura, non presente nella funzione step.
+
+%Plot del diagramma di bode
+%Nuova finestra grafica
+figure(2);
+
+%Vincolo sulla omega_c_min
+patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Indico la frequenza di attraversamento minima
+hold on;
+text(omega_plot_min*10,-100, sprintf('w_c^*>=%.2f rad/sec', omega_c_min));
+
+%Vincolo sulla omega_c_min opzionale
+hold on;
+patch([omega_c_min,omega_c_min_fac,omega_c_min_fac,omega_c_min],[-200,-200,0,0], [0.9100, 0.4100, 0.1700] ,'FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Vincolo sulla omega_c_max
+hold on;
+patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[200,200,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Indico la frequenza di attraversamento massima
+hold on;
+text(omega_c_max*5,60, sprintf('w_c^*<=%.2f rad/sec', omega_c_max));
+
+%Vincolo sull'attenuazione di n
+hold on;
+patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%plotto G
+hold on;
+margin(mag_G,phase_G,omega_G);
+
+%Vincolo sul margine di fase: -180

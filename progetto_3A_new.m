@@ -81,7 +81,7 @@ xi=sqrt(log(s_perc)^2/(pi^2+log(s_perc)^2)); %0.6901
 %valuto la condizione più restrittiva
 Mf_s_perc=xi*100; %69.01 
 
-%Mf>69.01° richiesta più limitatnte delle specifiche (Mf>45°).
+%Mf>69.01 gradi richiesta più limitatnte delle specifiche (Mf>45 gradi).
 Mf = Mf_s_perc;
 
 %Calcolo la frequenza di attraversamento minima attraverso la formula:
@@ -142,18 +142,16 @@ omega_plot_max=10^5;
 
 %A è una 3x3 perchè devo moltiplicare per le tre equazioni di stato 3x1 e 
 %deve saltare fuori un 3x1 quindi 3x3 * 3x1 = 3x1
-A = [0, 0,                                                                                      0;
-     1, -(2*(tab.x_equilibrio_2^2)*(tab.C_d*tab.u_equilibrio+tab.R_0)/abs(tab.x_equilibrio_2)), 0;
-     0, 0,                                                                                      0];
+A = [0, 0,                                                                                    ;
+     1, -(2*(tab.x_equilibrio_2^2)*(tab.C_d*tab.u_equilibrio+tab.R_0)/abs(tab.x_equilibrio_2))];
 
 %B è una 3x1 perchè deve moltiplicare per l'ingresso 1x1 e deve saltare
 %fuori una 3x1 quindi 3x1 * 1x1 = 3x1
 B = [0;
-     -(tab.C_d*tab.x_equilibrio_2*abs(tab.x_equilibrio_2));
-     0];
+     -(tab.C_d*tab.x_equilibrio_2*abs(tab.x_equilibrio_2))];
 
 %C è 1x3 perchè 1x3 * 3x1 = 1x1
-C = [-(tab.eta*tab.x_equilibrio_2), -(tab.eta*tab.x_equilibrio_1), 0];
+C = [-(tab.eta*tab.x_equilibrio_2), -(tab.eta*tab.x_equilibrio_1)];
 
 D = 0;
 
@@ -225,7 +223,7 @@ patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[-B_n_db,-B_n_db,0
 hold on;
 margin(mag_G,phase_G,omega_G);
 
-%Vincolo sul margine di fase: -180° + arg(L(jw_c))
+%Vincolo sul margine di fase: -180 gradi + arg(L(jw_c))
 hold on;
 %Coppie di punti (omega_c_min, -180+Mf), (omega_c_max, -180+Mf), 
 %(omega_c_max, -270), (omega_c_min, -270)
@@ -293,20 +291,22 @@ R_d_ant = (1+s*tau_rete_ant)/(1+tau_alpha_rete_ant*s);
 
 %Ricavo dei regolatori aggiungivi di scarto.
 
-tau_rete_ant_plus_30 = 1/(1/tau_rete_ant + (1/tau_rete_ant)*0.3);
-tau_rete_ant_minus_30 = 1/(1/tau_rete_ant - (1/tau_rete_ant)*0.3);
+tau_rete_ant_minus_20 = 1/(1/tau_rete_ant - (1/tau_rete_ant)*0.2);
+tau_rete_ant_minus_40 = 1/(1/tau_rete_ant - (1/tau_rete_ant)*0.4);
 
-%Tengo uno scarto più piccolo del 3% perchè poli più grandi
-tau_alpha_rete_ant_plus_30 = 1/(1/tau_alpha_rete_ant + (1/tau_alpha_rete_ant)*0.03);
-tau_alpha_rete_ant_minus_30 = 1/(1/tau_alpha_rete_ant - (1/tau_alpha_rete_ant)*0.03);
+%Tengo uno scarto più piccolo del 2% perchè poli più grandi
+tau_alpha_rete_ant_minus_20 = 1/(1/tau_alpha_rete_ant - (1/tau_alpha_rete_ant)*0.02);
+tau_alpha_rete_ant_minus_40 = 1/(1/tau_alpha_rete_ant - (1/tau_alpha_rete_ant)*0.04);
 
-R_d_ant_plus_30 = (1+s*tau_rete_ant_plus_30)/(1+tau_alpha_rete_ant_plus_30*s);
-R_d_ant_minus_30 = (1+s*tau_rete_ant_minus_30)/(1+tau_alpha_rete_ant_minus_30*s);
+R_d_ant_minus_20 = (1+s*tau_rete_ant_minus_20)/(1+tau_alpha_rete_ant_minus_20*s);
+R_d_ant_minus_40 = (1+s*tau_rete_ant_minus_40)/(1+tau_alpha_rete_ant_minus_40*s);
+
+%Imposto come rete la +20 in quanto è la più debole.
 
 %Stampo il grafico per vedere in che scenario siamo caduti.
 G_e_1 = R_d_ant * G_e;
-G_e_1_plus_30 = R_d_ant_plus_30 * G_e;
-G_e_1_minus_30 = R_d_ant_minus_30 * G_e;
+G_e_1_minus_20 = R_d_ant_minus_20 * G_e;
+G_e_1_minus_40 = R_d_ant_minus_40 * G_e;
 
 %Ricavo i dati sulla G_e_1
 [mag_G_e_1,phase_G_e_1,omega_G_e_1]=bode(G_e_1,{omega_plot_min,omega_plot_max});
@@ -341,7 +341,7 @@ patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[-B_n_db,-B_n_db,0
 hold on;
 margin(mag_G_e,phase_G_e,omega_G_e);
 
-%Vincolo sul margine di fase: -180° + arg(L(jw_c))
+%Vincolo sul margine di fase: -180 gradi + arg(L(jw_c))
 hold on;
 %Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -180),
 %(w_c_min, -180)
@@ -438,18 +438,19 @@ title("Luogo delle radici di Rd*Rs*G");
 
 
 %Dal luogo delle radici di evidenziano i seguenti guadagni:
-mu_d_2 = 0.108;
-mu_d_3 = 0.0525;
+mu_d_2 = 0.106;
+mu_d_3 = 0.0498;
 
-%Il guadagno minimo mu_d_3 (0.0525) viene rispettato sia da mu_d_2 (0.1080)
-%sia da mu_d_1 (0.0727)
+%Il guadagno minimo mu_d_3 (0.0498) viene rispettato sia da mu_d_2 (0.1060)
+%sia da mu_d_1 (0.0598)
 
 %In questo caso mu_d_1 è più stringente di mu_d_2.
+%Prendo un margine più elevato per eventuali incertezze.
 mu_d = mu_d_1;
 
 L = mu_d * G_e_1;
-L_plus_30 = mu_d * G_e_1_plus_30;
-L_minus_30 = mu_d * G_e_1_minus_30;
+L_minus_20 = mu_d * G_e_1_minus_20;
+L_minus_40 = mu_d * G_e_1_minus_40;
 
 %Plotto L
 figure(3);
@@ -490,9 +491,10 @@ DenL = DenL{1,1};
 %Chiusura dei loop
 
 F=L/(1+L);
+
 %F con margini nella rete anticipatrice, guadagno non modificato.
-F_plus_30 = L_plus_30/(1+L_plus_30);
-F_minus_30 = L_minus_30/(1+L_minus_30);
+F_minus_20 = L_minus_20/(1+L_minus_20);
+F_minus_40 = L_minus_40/(1+L_minus_40);
 
 
 %Ricavo informazioni
@@ -529,12 +531,12 @@ disp(F_stepinfo);
 figure(5);
 hold on;
 %Alla 5 aggiungo anche gli step di margine.
-step(F_plus_30, stepOption);
+step(F_minus_20, stepOption);
 hold on;
-step(F_minus_30, stepOption);
+step(F_minus_40, stepOption);
 
 title(sprintf("Risposta al gradino (W=%d) di L in anello chiuso", tab.W));
-legend("F", "F+30", "F-30");
+legend("F", "F-20", "F-40");
 grid on;
 
 %Rappresento con il diagramma di bode F e CG
@@ -552,7 +554,7 @@ grid on;
 %Dal grafico si osserva che:
 %Il vincolo di misura viene rispettato: -30db circa in 1000 rad/s
 %Il vincolo di sovraelongazione viene rispettato: alla pulsazione di taglio
-%ho un valore di -70 gradi.
+%ho un valore di -75 gradi.
 %Non riesco a capire se il vincolo di tempo di assestamento viene
 %rispettato, lo verifico dalla risposta a gradino nel grafico precedente.
 %L'errore a regime è nullo, sempre verificato dal grafico precedente.
@@ -571,7 +573,7 @@ grid on;
 %Tempo assestamento: 0.000515 sec
 %Sovraelongazione percentuale: 0%
 %Attenuazione errore di misura: -0.2db
-%Errore e_inf non nullo (ma molto basso: e<0.03 verificato con simulink)
+%Errore e_inf non nullo (basso: e<0.03 dovuto al guadagno molto elevato)
 %Margine di fase: 135 gradi
 
 %In conclusione il sistema G senza regolatore chiuso in retroazione
@@ -585,15 +587,7 @@ grid on;
 %PROVA IN SIMULINK
 %open('progetto_simulink_new.slx')
 
-%Il regolatore sul sistema linearizzato risponde in modo impeccabile, 
-%mentre il regolatore sul sistema non linearizzato nelle condizioni di eq.
-%non riesce minimamente a controllarlo:
-
-%1)Nel sistema non lineare il regolatore è instabile, producendo una rampa
-%sempre più grande (dovuto al polo nell'orgine, integratore)
-%2)Il sistema non lineare si stabilizza a zero, qualunque sia l'ingresso.
-
-%Una spiegazione è data dal modello di x_dot_2: l'ingresso u viene
-%moltiplicato per un fattore x_2*|x_2| il quale domina rispetto ad u.
-%Servirebbe un regolatore particolare
+%Il regolatore sul sistema linearizzato risponde in modo impeccabile
+%Il regolatore sul sistema non lineare funziona piuttosto bene in un
+%intorno della coppia di equilibrio.
 

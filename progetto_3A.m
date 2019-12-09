@@ -88,7 +88,7 @@ omega_c_max=tab.omega_n; % 1000 rad/s
 %Viene ricavato dalla sovraelongazione con la formula classica.
 xi=sqrt(log(s_perc)^2/(pi^2+log(s_perc)^2)); %0.6901
 
-%Mf>38.2618° richiesta meno limitatnte delle specifiche (Mf>45°).
+%Mf>69.01 gradi richiesta meno limitatnte delle specifiche (Mf>45 gradi).
 %PROCEDIMENTO: calcolo xi con la formula inversa, poi calcolo il Mf e
 %valuto la condizione più restrittiva
 Mf_s_perc=xi*100; %69.01
@@ -294,7 +294,7 @@ margin(Mag_L,phase_L,omega_L);
 
 title("Bode di L e F con vincoli");
 
-% %Vincolo sul margine di fase: -180° + arg(L(jw_c))
+% %Vincolo sul margine di fase: -180gradi + arg(L(jw_c))
 % hold on;
 % %Coppie di punti (omega_c_min, -180+Mf), (omega_c_max, -180+Mf), 
 % %(omega_c_max, -270), (omega_c_min, -270)

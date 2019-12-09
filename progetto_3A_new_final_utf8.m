@@ -81,8 +81,11 @@ xi=sqrt(log(s_perc)^2/(pi^2+log(s_perc)^2)); %0.6901
 %valuto la condizione più restrittiva
 Mf_s_perc=xi*100; %69.01 
 
-%Mf>69.01 gradi richiesta più limitatnte delle specifiche (Mf>45 gradi).
+%Mf>69.01° richiesta più limitatnte delle specifiche (Mf>45°).
 Mf = Mf_s_perc;
+
+%Chiedo una robustezza maggiore in Mf
+Mf = Mf_s_perc + 10;
 
 %Calcolo la frequenza di attraversamento minima attraverso la formula:
 %460/(Mf* T*) cioè 460/(45 * 0.3)
@@ -223,7 +226,7 @@ patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[-B_n_db,-B_n_db,0
 hold on;
 margin(mag_G,phase_G,omega_G);
 
-%Vincolo sul margine di fase: -180 gradi + arg(L(jw_c))
+%Vincolo sul margine di fase: -180° + arg(L(jw_c))
 hold on;
 %Coppie di punti (omega_c_min, -180+Mf), (omega_c_max, -180+Mf), 
 %(omega_c_max, -270), (omega_c_min, -270)
@@ -257,56 +260,24 @@ title("Bode di G e di G con regolatore statico");
 %%
 %--Progettazione della rete regolatrice dinamica--
 
-%Vecchio metodo usando le formule inverse, non funziona bene....
+omega_c_star_ant = 125;
+Mf_ant = 70;
 
-% % % % omega_c_star_ant = 630;
-% % % % Mf_ant = Mf;
-% % % % 
-% % % % %Ricavo i dati di attraversamento di G_e
-% % % % [Mag_G_e_omega_c_star_ant,phase_G_e_omega_c_star_ant,omega_c_star_ant]=bode(G_e, omega_c_star_ant);
-% % % % 
-% % % % M_star_ant = 1/Mag_G_e_omega_c_star_ant;
-% % % % phi_star_ant = Mf_ant-180-phase_G_e_omega_c_star_ant;
-% % % % 
-% % % % tau_rete_ant = (M_star_ant-cos(phi_star_ant*pi/180))/(omega_c_star_ant*sin(phi_star_ant*pi/180));
-% % % % tau_alpha_rete_ant = (cos(phi_star_ant*pi/180)-1/M_star_ant)/(omega_c_star_ant*sin(phi_star_ant*pi/180));
-% % % % alpha_rete_ant = tau_alpha_rete_ant/tau_rete_ant;
+%Ricavo i dati di attraversamento di G_e
+[Mag_G_e_omega_c_star_ant,phase_G_e_omega_c_star_ant,omega_c_star_ant]=bode(G_e, omega_c_star_ant);
 
-%Trucco: Metto lo zero della rete anticipatrice vicino (scarto 30%)
-%al polo in -3.333, mentre il polo della rete anticipatrice lo sposto molto
-%più a sinistra dell'asse T_axis_fac: così facendo il polo a -3.333 si
-%annulla con lo zero della rete, ciò ci consente di guadagnare il Mf 
-%necessario per ricadere in uno scenario A.
+M_star_ant = 1/Mag_G_e_omega_c_star_ant;
+phi_star_ant = Mf_ant-180-phase_G_e_omega_c_star_ant;
 
-%PS: In retroazione succede una cosa differente: lo zero aggiunto in -3.333
-%si annulla con il polo nell'origine, mentre il polo a -3.333 si sposta
-%molto a sinistra oltre la retta di tempo di assestamento facoltativo.
-
-alpha_rete_ant = 0.01;
-tau_rete_ant = 1/3.333;
-tau_alpha_rete_ant = tau_rete_ant*alpha_rete_ant;
+tau_rete_ant = (M_star_ant-cos(phi_star_ant*pi/180))/(omega_c_star_ant*sin(phi_star_ant*pi/180));
+tau_alpha_rete_ant = (cos(phi_star_ant*pi/180)-1/M_star_ant)/(omega_c_star_ant*sin(phi_star_ant*pi/180));
+alpha_rete_ant = tau_alpha_rete_ant/tau_rete_ant;
 
 %Ricavo il regolatore dinamico (anticipatore).
 R_d_ant = (1+s*tau_rete_ant)/(1+tau_alpha_rete_ant*s);
 
-%Ricavo dei regolatori aggiungivi di scarto.
-
-tau_rete_ant_minus_20 = 1/(1/tau_rete_ant - (1/tau_rete_ant)*0.2);
-tau_rete_ant_minus_40 = 1/(1/tau_rete_ant - (1/tau_rete_ant)*0.4);
-
-%Tengo uno scarto più piccolo del 2% perchè poli più grandi
-tau_alpha_rete_ant_minus_20 = 1/(1/tau_alpha_rete_ant - (1/tau_alpha_rete_ant)*0.02);
-tau_alpha_rete_ant_minus_40 = 1/(1/tau_alpha_rete_ant - (1/tau_alpha_rete_ant)*0.04);
-
-R_d_ant_minus_20 = (1+s*tau_rete_ant_minus_20)/(1+tau_alpha_rete_ant_minus_20*s);
-R_d_ant_minus_40 = (1+s*tau_rete_ant_minus_40)/(1+tau_alpha_rete_ant_minus_40*s);
-
-%Imposto come rete la +20 in quanto è la più debole.
-
 %Stampo il grafico per vedere in che scenario siamo caduti.
 G_e_1 = R_d_ant * G_e;
-G_e_1_minus_20 = R_d_ant_minus_20 * G_e;
-G_e_1_minus_40 = R_d_ant_minus_40 * G_e;
 
 %Ricavo i dati sulla G_e_1
 [mag_G_e_1,phase_G_e_1,omega_G_e_1]=bode(G_e_1,{omega_plot_min,omega_plot_max});
@@ -341,7 +312,7 @@ patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[-B_n_db,-B_n_db,0
 hold on;
 margin(mag_G_e,phase_G_e,omega_G_e);
 
-%Vincolo sul margine di fase: -180 gradi + arg(L(jw_c))
+%Vincolo sul margine di fase: -180° + arg(L(jw_c))
 hold on;
 %Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -180),
 %(w_c_min, -180)
@@ -438,19 +409,18 @@ title("Luogo delle radici di Rd*Rs*G");
 
 
 %Dal luogo delle radici di evidenziano i seguenti guadagni:
-mu_d_2 = 0.106;
-mu_d_3 = 0.0498;
+mu_d_2 = 0.108;
+mu_d_3 = 0.0525;
 
-%Il guadagno minimo mu_d_3 (0.0498) viene rispettato sia da mu_d_2 (0.1060)
-%sia da mu_d_1 (0.0598)
+%Il guadagno minimo mu_d_3 (0.0525) viene rispettato sia da mu_d_2 (0.1080)
+%sia da mu_d_1 (0.0727)
 
 %In questo caso mu_d_1 è più stringente di mu_d_2.
-%Prendo un margine più elevato per eventuali incertezze.
 mu_d = mu_d_1;
 
 L = mu_d * G_e_1;
-L_minus_20 = mu_d * G_e_1_minus_20;
-L_minus_40 = mu_d * G_e_1_minus_40;
+L_plus_30 = mu_d * G_e_1_plus_30;
+L_minus_30 = mu_d * G_e_1_minus_30;
 
 %Plotto L
 figure(3);
@@ -491,10 +461,9 @@ DenL = DenL{1,1};
 %Chiusura dei loop
 
 F=L/(1+L);
-
 %F con margini nella rete anticipatrice, guadagno non modificato.
-F_minus_20 = L_minus_20/(1+L_minus_20);
-F_minus_40 = L_minus_40/(1+L_minus_40);
+F_plus_30 = L_plus_30/(1+L_plus_30);
+F_minus_30 = L_minus_30/(1+L_minus_30);
 
 
 %Ricavo informazioni
@@ -531,12 +500,12 @@ disp(F_stepinfo);
 figure(5);
 hold on;
 %Alla 5 aggiungo anche gli step di margine.
-step(F_minus_20, stepOption);
+step(F_plus_30, stepOption);
 hold on;
-step(F_minus_40, stepOption);
+step(F_minus_30, stepOption);
 
 title(sprintf("Risposta al gradino (W=%d) di L in anello chiuso", tab.W));
-legend("F", "F-20", "F-40");
+legend("F", "F+30", "F-30");
 grid on;
 
 %Rappresento con il diagramma di bode F e CG
@@ -554,7 +523,7 @@ grid on;
 %Dal grafico si osserva che:
 %Il vincolo di misura viene rispettato: -30db circa in 1000 rad/s
 %Il vincolo di sovraelongazione viene rispettato: alla pulsazione di taglio
-%ho un valore di -75 gradi.
+%ho un valore di -70 gradi.
 %Non riesco a capire se il vincolo di tempo di assestamento viene
 %rispettato, lo verifico dalla risposta a gradino nel grafico precedente.
 %L'errore a regime è nullo, sempre verificato dal grafico precedente.
@@ -573,7 +542,7 @@ grid on;
 %Tempo assestamento: 0.000515 sec
 %Sovraelongazione percentuale: 0%
 %Attenuazione errore di misura: -0.2db
-%Errore e_inf non nullo (basso: e<0.03 dovuto al guadagno molto elevato)
+%Errore e_inf non nullo (ma molto basso: e<0.03 verificato con simulink)
 %Margine di fase: 135 gradi
 
 %In conclusione il sistema G senza regolatore chiuso in retroazione
