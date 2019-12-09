@@ -140,19 +140,21 @@ omega_plot_max=10^5;
 
 %Definiamo le matrici A,B,C,D derivabili dalla forma di stato e dall'uscita
 
-%A è una 3x3 perchè devo moltiplicare per le tre equazioni di stato 3x1 e 
-%deve saltare fuori un 3x1 quindi 3x3 * 3x1 = 3x1
+%A è una 2x2 perchè devo moltiplicare per le tre equazioni di stato 2x1 e 
+%deve saltare fuori un 2x1 quindi 2x2 * 2x1 = 2x1
 A = [0, 0,                                                                                    ;
      1, -(2*(tab.x_equilibrio_2^2)*(tab.C_d*tab.u_equilibrio+tab.R_0)/abs(tab.x_equilibrio_2))];
 
-%B è una 3x1 perchè deve moltiplicare per l'ingresso 1x1 e deve saltare
-%fuori una 3x1 quindi 3x1 * 1x1 = 3x1
+%B è una 2x1 perchè deve moltiplicare per l'ingresso 1x1 e deve saltare
+%fuori una 2x1 quindi 2x1 * 1x1 = 2x1
 B = [0;
      -(tab.C_d*tab.x_equilibrio_2*abs(tab.x_equilibrio_2))];
 
-%C è 1x3 perchè 1x3 * 3x1 = 1x1
+%C è 1x2 perchè 1x2 * 2x1 = 1x1
 C = [-(tab.eta*tab.x_equilibrio_2), -(tab.eta*tab.x_equilibrio_1)];
 
+%Se D = 0 l'uscita non dipende dall'ingresso: il grado relativo è maggiore
+%di zero.
 D = 0;
 
 %Per verificare il contenuto delle variabili globali uso la funzione disp
@@ -229,7 +231,6 @@ hold on;
 %(omega_c_max, -270), (omega_c_min, -270)
 patch([omega_c_min,omega_c_max,omega_c_max,omega_c_min],[-180+Mf,-180+Mf,-180,-180],'red','FaceAlpha',0.2,'EdgeAlpha',0); 
 
-
 %%
 %--Progettazione della rete regolatrice statica--
 
@@ -252,6 +253,10 @@ legend("G",  "Vincoli", "G con Rs");
 grid on;
 title("Bode di G e di G con regolatore statico");
 
+hold on;
+text(100,-150, "Scenario B");
+
+%Il polo nell'origine mi fa abbassare la fase di 90 gradi. 
 %Dal grafico si deduce che siamo caduti in uno scenario B
 
 %%
@@ -444,6 +449,8 @@ mu_d_3 = 0.0498;
 %Il guadagno minimo mu_d_3 (0.0498) viene rispettato sia da mu_d_2 (0.1060)
 %sia da mu_d_1 (0.0598)
 
+% 0.106 < 0.07 <= x < 0.05
+
 %In questo caso mu_d_1 è più stringente di mu_d_2.
 %Prendo un margine più elevato per eventuali incertezze.
 mu_d = mu_d_1;
@@ -516,7 +523,7 @@ grid on;
 
 %Informazioni sullo step
 %Simulo di nuovo lo step ma in questo caso non plotto ma ricavo i dati:
-[Y_F,T_F] = step(F, stepOption);
+[Y_F,T_F] = step(F_minus_40, stepOption);
 %Imposto un vincolo dell'1% sul tempo di assestamento e ricavo le info:
 F_stepinfo = stepinfo(Y_F, T_F,'SettlingTimeThreshold',0.01);
 disp(F_stepinfo);
