@@ -262,20 +262,22 @@ text(100,-150, "Scenario B");
 %%
 %--Progettazione della rete regolatrice dinamica--
 
-%Vecchio metodo usando le formule inverse, non funziona bene....
+%Stampo i poli e zeri del sistema G_e
 
-% % % % omega_c_star_ant = 630;
-% % % % Mf_ant = Mf;
-% % % % 
-% % % % %Ricavo i dati di attraversamento di G_e
-% % % % [Mag_G_e_omega_c_star_ant,phase_G_e_omega_c_star_ant,omega_c_star_ant]=bode(G_e, omega_c_star_ant);
-% % % % 
-% % % % M_star_ant = 1/Mag_G_e_omega_c_star_ant;
-% % % % phi_star_ant = Mf_ant-180-phase_G_e_omega_c_star_ant;
-% % % % 
-% % % % tau_rete_ant = (M_star_ant-cos(phi_star_ant*pi/180))/(omega_c_star_ant*sin(phi_star_ant*pi/180));
-% % % % tau_alpha_rete_ant = (cos(phi_star_ant*pi/180)-1/M_star_ant)/(omega_c_star_ant*sin(phi_star_ant*pi/180));
-% % % % alpha_rete_ant = tau_alpha_rete_ant/tau_rete_ant;
+figure(7);
+pzmap(G_e);
+
+%Disegno l'asse T_axis
+hold on;
+plot([-T_axis, -T_axis],[-10, 10]);
+hold on;
+plot([-T_axis_fac, -T_axis_fac],[-10, 10]);
+
+legend("", "Vincolo T_a", "Vincolo T_a facoltativo");
+%Attivo la griglia.
+grid on;
+title("Poli e zeri di Rs*G");
+
 
 %Trucco: Metto lo zero della rete anticipatrice vicino (scarto 30%)
 %al polo in -3.333, mentre il polo della rete anticipatrice lo sposto molto
@@ -597,4 +599,83 @@ grid on;
 %Il regolatore sul sistema linearizzato risponde in modo impeccabile
 %Il regolatore sul sistema non lineare funziona piuttosto bene in un
 %intorno della coppia di equilibrio.
+
+
+%%
+%Stampa dei grafici per latex
+
+% for index = 1:6
+%     figure(index);
+%     print(sprintf("figure/figure%d.eps", index), '-depsc');  
+% end
+
+%%
+
+%Problema attraversamento
+
+% figure(3);
+% print("problema/bodeL.eps", '-depsc');
+% 
+% figure(8);
+% pzmap(L);
+% 
+% %Disegno l'asse T_axis
+% hold on;
+% plot([-T_axis, -T_axis],[-10, 10]);
+% hold on;
+% plot([-T_axis_fac, -T_axis_fac],[-10, 10]);
+% 
+% legend("", "Vincolo T_a", "Vincolo T_a facoltativo");
+% %Attivo la griglia.
+% grid on;
+% title("Posizione di poli e zeri di L");
+% 
+% figure(8);
+% print("problema/pzmapL.eps", '-depsc');
+% 
+% L_semplice = 31315/(s*(s+333.3));
+% 
+% 
+% %Ricavo i dati sulla L_semplice
+% [mag_L_semplice,phase_L_semplice,omega_L_semplice]=bode(L_semplice,{omega_plot_min,omega_plot_max});
+% 
+% %Nuova finestra grafica
+% figure(9);
+% 
+% %Vincolo sulla omega_c_min
+% patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
+% 
+% %Indico la frequenza di attraversamento minima
+% hold on;
+% text(omega_plot_min*10,-100, sprintf('w_c^*>=%.2f rad/sec', omega_c_min));
+% 
+% %Vincolo sulla omega_c_min opzionale
+% hold on;
+% patch([omega_c_min,omega_c_min_fac,omega_c_min_fac,omega_c_min],[-200,-200,0,0], [0.9100, 0.4100, 0.1700] ,'FaceAlpha',0.3,'EdgeAlpha',0); 
+% 
+% %Vincolo sulla omega_c_max
+% hold on;
+% patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[200,200,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
+% 
+% %Indico la frequenza di attraversamento massima
+% hold on;
+% text(omega_c_max*5,60, sprintf('w_c^*<=%.2f rad/sec', omega_c_max));
+% 
+% %Vincolo sull'attenuazione di n
+% hold on;
+% patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
+% 
+% %Plotto L_semplice
+% hold on;
+% margin(mag_L_semplice,phase_L_semplice,omega_L_semplice);
+% 
+% %Vincolo sul margine di fase: -180 gradi + arg(L(jw_c))
+% hold on;
+% %Coppie di punti (w_c_min, -180+Mf), (w_c_max, -180+Mf), (w_c_max, -180),
+% %(w_c_min, -180)
+% patch([omega_c_min,omega_c_max,omega_c_max,omega_c_min],[-180+Mf,-180+Mf,-180,-180],'red','FaceAlpha',0.2,'EdgeAlpha',0);
+% 
+% 
+% figure(4);
+% print("problema/rlocusG_e_2.eps", '-depsc');
 

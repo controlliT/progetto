@@ -610,9 +610,15 @@ grid on;
 % end
 
 %%
+<<<<<<< HEAD
 % 
 % %Problema attraversamento
 % 
+=======
+
+%Problema attraversamento
+
+>>>>>>> 51c9ba8bb7e8ee062f54568b5eba86ed6b7689e5
 % figure(3);
 % print("problema/bodeL.eps", '-depsc');
 % 
