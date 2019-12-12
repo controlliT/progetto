@@ -34,12 +34,12 @@ tab.u_equilibrio = (tab.x_equilibrio_1/(tab.x_equilibrio_2*abs(tab.x_equilibrio_
 %Definizione del sistema:
 %Il sistema è formato da due variabili di stato:
 
-%x_1: la pressione dell'acqua sul fondo del bacino. Consideriamo la 
+%x_1: la pressione dell\'acqua sul fondo del bacino. Consideriamo la 
 %pressione sul fondo costante.
 %x_2: la portata in uscita dal bacino.
 
-%L'uscita del sistema viene rappresentata dalla variabile y:
-%y: rappresenta l'energia elettrica generata attraverso la turbina.
+%L\'uscita del sistema viene rappresentata dalla variabile y:
+%y: rappresenta l\'energia elettrica generata attraverso la turbina.
 %y= -eta*x_1*x_2
 
 %Forma di stato:
@@ -58,13 +58,13 @@ tab.u_equilibrio = (tab.x_equilibrio_1/(tab.x_equilibrio_2*abs(tab.x_equilibrio_
 
 s_perc = 0.05;
 
-%4 Il tempo di assestamento all'1% deve essere tenuto relativamente basso T_a_1 = 0.3 s
+%4 Il tempo di assestamento all\'1% deve essere tenuto relativamente basso T_a_1 = 0.3 s
 %5 Devo abbattere i rumori n di 30 volte che in db =
 B_n_db = 20*log10(tab.B_n);
 
 %Specifiche opzionali:
 
-%1 Il tempo di assestamento all'1% deve essere tenuto a 0.033 s
+%1 Il tempo di assestamento all\'1% deve essere tenuto a 0.033 s
 
 %Introduco i vincoli indiretti:
 
@@ -97,11 +97,11 @@ omega_c_min = 460/(Mf * tab.T_a_1);
 %sistema in retroazione (F).
 omega_c_min_fac = 460/(Mf * tab.T_a_0); 
 
-%Calcolo anche l'asse di specifica del tempo di assestamento all'1%
+%Calcolo anche l\'asse di specifica del tempo di assestamento all\'1%
 T_axis = 4.6 / tab.T_a_1;
 T_axis_fac = 4.6 / tab.T_a_0;
 
-%Abbiamo individuato l'intervallo per la pulsazione di attraversamento 
+%Abbiamo individuato l\'intervallo per la pulsazione di attraversamento 
 fprintf('Range di attraversamento obbligatorio [%.2f rad/s, %.2f rad/s]\n', omega_c_min, omega_c_max);
 %Versione opzionale:
 fprintf('Range di attraversamento opzionale [%.2f rad/s, %.2f rad/s]\n', omega_c_min_fac, omega_c_max);
@@ -138,14 +138,14 @@ omega_plot_max=10^5;
 %C = 0 + d/dx (y)|x=x_equilibrio, u=u_equilibrio
 %D = 0 + d/du (y)|x=x_equilibrio, u=u_equilibrio
 
-%Definiamo le matrici A,B,C,D derivabili dalla forma di stato e dall'uscita
+%Definiamo le matrici A,B,C,D derivabili dalla forma di stato e dall\'uscita
 
-%A è una 2x2 perchè devo moltiplicare per le tre equazioni di stato 2x1 e 
+\%A è una 2x2 perchè devo moltiplicare per le tre equazioni di stato 2x1 e 
 %deve saltare fuori un 2x1 quindi 2x2 * 2x1 = 2x1
 A = [0, 0,                                                                                    ;
      1, -(2*(tab.x_equilibrio_2^2)*(tab.C_d*tab.u_equilibrio+tab.R_0)/abs(tab.x_equilibrio_2))];
 
-%B è una 2x1 perchè deve moltiplicare per l'ingresso 1x1 e deve saltare
+%B è una 2x1 perchè deve moltiplicare per l\'ingresso 1x1 e deve saltare
 %fuori una 2x1 quindi 2x1 * 1x1 = 2x1
 B = [0;
      -(tab.C_d*tab.x_equilibrio_2*abs(tab.x_equilibrio_2))];
@@ -153,7 +153,7 @@ B = [0;
 %C è 1x2 perchè 1x2 * 2x1 = 1x1
 C = [-(tab.eta*tab.x_equilibrio_2), -(tab.eta*tab.x_equilibrio_1)];
 
-%Se D = 0 l'uscita non dipende dall'ingresso: il grado relativo è maggiore
+%Se D = 0 l\'uscita non dipende dall\'ingresso: il grado relativo è maggiore
 %di zero.
 D = 0;
 
@@ -187,7 +187,7 @@ grid on;
 %Informazioni sullo step
 %Simulo di nuovo lo step ma in questo caso non plotto ma ricavo i dati:
 [Y_CG,T_CG] = step(CG, stepOption);
-%Imposto un vincolo dell'1% sul tempo di assestamento e ricavo le info:
+%Imposto un vincolo dell\'1% sul tempo di assestamento e ricavo le info:
 CG_stepinfo = stepinfo(Y_CG, T_CG,'SettlingTimeThreshold',0.01);
 disp(CG_stepinfo);
 
@@ -217,7 +217,7 @@ patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[200,200,0,0],'red
 hold on;
 text(omega_c_max*5,60, sprintf('w_c^*<=%.2f rad/sec', omega_c_max));
 
-%Vincolo sull'attenuazione di n
+%Vincolo sull\'attenuazione di n
 hold on;
 patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
 
@@ -256,7 +256,7 @@ title("Bode di G e di G con regolatore statico");
 hold on;
 text(100,-150, "Scenario B");
 
-%Il polo nell'origine mi fa abbassare la fase di 90 gradi. 
+%Il polo nell\'origine mi fa abbassare la fase di 90 gradi. 
 %Dal grafico si deduce che siamo caduti in uno scenario B
 
 %%
@@ -267,7 +267,7 @@ text(100,-150, "Scenario B");
 figure(7);
 pzmap(G_e);
 
-%Disegno l'asse T_axis
+%Disegno l\'asse T_axis
 hold on;
 plot([-T_axis, -T_axis],[-10, 10]);
 hold on;
@@ -281,12 +281,12 @@ title("Poli e zeri di Rs*G");
 
 %Trucco: Metto lo zero della rete anticipatrice vicino (scarto 30%)
 %al polo in -3.333, mentre il polo della rete anticipatrice lo sposto molto
-%più a sinistra dell'asse T_axis_fac: così facendo il polo a -3.333 si
+%più a sinistra dell\'asse T_axis_fac: così facendo il polo a -3.333 si
 %annulla con lo zero della rete, ciò ci consente di guadagnare il Mf 
 %necessario per ricadere in uno scenario A.
 
 %PS: In retroazione succede una cosa differente: lo zero aggiunto in -3.333
-%si annulla con il polo nell'origine, mentre il polo a -3.333 si sposta
+%si annulla con il polo nell\'origine, mentre il polo a -3.333 si sposta
 %molto a sinistra oltre la retta di tempo di assestamento facoltativo.
 
 alpha_rete_ant = 0.01;
@@ -340,7 +340,7 @@ patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[200,200,0,0],'red
 hold on;
 text(omega_c_max*5,60, sprintf('w_c^*<=%.2f rad/sec', omega_c_max));
 
-%Vincolo sull'attenuazione di n
+%Vincolo sull\'attenuazione di n
 hold on;
 patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
 
@@ -369,7 +369,7 @@ title("Bode di G con i vari regolatori");
 zpk(G_e_1)
 %Il polo -3.333 viene cancellato con lo zero della rete (30% di scarto con
 %relativa coda di assestamento), mentre il polo della rete è trascurabile.
-%Rimane il polo nell'origine. Se collegassi G_e_1 in anello aperto
+%Rimane il polo nell\'origine. Se collegassi G_e_1 in anello aperto
 %funzionerebbe come integratore, almeno per frequenze basse.
 
 %COSA SUCCEDE IN ANELLO CHIUSO (G_e_1/(1+G_e_1)): 
@@ -387,7 +387,7 @@ zpk(G_e_1/(1+G_e_1))
 %terzo riguarda un minimo.
 
 %In teoria ci sarebbe un quarto guadagno di minimo riguardo la
-%cancellazione del polo nell'orgine ma è trascurabile rispetto agli altri.
+%cancellazione del polo nell\'orgine ma è trascurabile rispetto agli altri.
 
 %Calcoliamo il primo guadagno
 
@@ -415,7 +415,7 @@ mu_d_1 = 10^(mu_d_db/20);
 
 %Il terzo guadagno riguarda il guadagno minimo per cui le specifiche di
 %tempo di assestamento vengano rispettate: in questo caso mi devo
-%assicurare il il polo -3.333 superi l'asse T_axis_fac.
+%assicurare il il polo -3.333 superi l\'asse T_axis_fac.
 
 %Faccio un plot del luogo delle radici per capire le specifiche. Inoltre
 %aggiungo gli assi di specifica T_a, mentre per la specifica S% attivo la
@@ -424,7 +424,7 @@ mu_d_1 = 10^(mu_d_db/20);
 figure(4);
 rlocus(G_e_1);
 
-%Disegno l'asse T_axis
+%Disegno l\'asse T_axis
 hold on;
 plot([-T_axis, -T_axis],[-10, 10]);
 hold on;
@@ -476,7 +476,7 @@ title("Bode di G con i vari regolatori fino a L");
 %NOTA IMPORTANTE: sembrerebbe che dal grafico non vengano soddisfatte le
 %specifiche di tempo di assestamento facoltative. In realtà bisogna tenere
 %in conto la chiusura in retroazione di L:
-%il margine di fase nell'attraversamento assume un altro valore e di
+%il margine di fase nell\'attraversamento assume un altro valore e di
 %conseguenza anche omega_c_min si sposta: andando a plottare i vincoli
 %sulla F si nota che viene rispettato anche questo vincolo.
 
@@ -526,7 +526,7 @@ grid on;
 %Informazioni sullo step
 %Simulo di nuovo lo step ma in questo caso non plotto ma ricavo i dati:
 [Y_F,T_F] = step(F_minus_40, stepOption);
-%Imposto un vincolo dell'1% sul tempo di assestamento e ricavo le info:
+%Imposto un vincolo dell\'1% sul tempo di assestamento e ricavo le info:
 F_stepinfo = stepinfo(Y_F, T_F,'SettlingTimeThreshold',0.01);
 disp(F_stepinfo);
 
@@ -566,7 +566,7 @@ grid on;
 %ho un valore di -75 gradi.
 %Non riesco a capire se il vincolo di tempo di assestamento viene
 %rispettato, lo verifico dalla risposta a gradino nel grafico precedente.
-%L'errore a regime è nullo, sempre verificato dal grafico precedente.
+%L\'errore a regime è nullo, sempre verificato dal grafico precedente.
 
 %%
 %CONCLUSIONI
@@ -587,7 +587,7 @@ grid on;
 
 %In conclusione il sistema G senza regolatore chiuso in retroazione
 %funziona molto più velocemente in quanto è approssimabile ad un sistema
-%del tipo: G(s)=mu nel range di frequenze fino a 4000 rad/s circa. L'unica
+%del tipo: G(s)=mu nel range di frequenze fino a 4000 rad/s circa. L\'unica
 %pecca è la violazione sui vincoli di e_inf=0 e attenuazione di misura.
 %Se non ci fosse stato il problema di questi vincoli, allora il sistema G
 %in anello chiuso sarebbe bastato, a meno di una correzione del guadagno.
@@ -610,22 +610,18 @@ grid on;
 % end
 
 %%
-<<<<<<< HEAD
+
 % 
 % %Problema attraversamento
 % 
-=======
 
-%Problema attraversamento
-
->>>>>>> 51c9ba8bb7e8ee062f54568b5eba86ed6b7689e5
 % figure(3);
 % print("problema/bodeL.eps", '-depsc');
 % 
 % figure(8);
 % pzmap(L);
 % 
-% %Disegno l'asse T_axis
+% %Disegno l\'asse T_axis
 % hold on;
 % plot([-T_axis, -T_axis],[-10, 10]);
 % hold on;
@@ -667,7 +663,7 @@ grid on;
 % hold on;
 % text(omega_c_max*5,60, sprintf('w_c^*<=%.2f rad/sec', omega_c_max));
 % 
-% %Vincolo sull'attenuazione di n
+% %Vincolo sull\'attenuazione di n
 % hold on;
 % patch([omega_plot_max,omega_c_max,omega_c_max,omega_plot_max],[-B_n_db,-B_n_db,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
 % 
