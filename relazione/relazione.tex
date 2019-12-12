@@ -169,11 +169,22 @@ Il polo presente della rete anticipatrice è dovuto alla fisica realizzabilità 
 Rimane il problema di dove porre lo zero e il polo nel piano complesso:
 \begin{itemize}
     \item Lo zero deve fornire un aumento di fase tale da superare il vincolo del margine di fase in almeno una parte del range di attraversamento
-    \item Il polo deve essere collocato in alta frequenza (molto lontano dall'asse degli immaginari) per non disturbare l'effetto del polo.
+    \item Il polo deve essere collocato in alta frequenza (molto lontano dall'asse degli immaginari) per non disturbare l'effetto dello zero.
 \end{itemize}
 
 Potremmo utilizzare le formule di inversione per calcolare $\alpha$ e $\tau$. In questo caso abbiamo preferito l'utilizzo del luogo delle radici per il rispetto dei vincoli di sovraelongazione e di tempo di assestamento, mentre abbiamo osservato il diagramma di bode della funzione di trasferimento $G_e = R_s * G$ per calcolare il guadagno necessario per soddisfare il vincolo sull'attenuazione di misura.
 
+\subsection{Attenuazione necessaria per il rumore di misura}
+
+Utilizzando le funzioni di matlab e il diagramma di Bode, abbiamo calcolato il valore massimo di $\mu_d$, ancora libero in quanto non usato nel regolatore statico, per rispettare il vincolo di attenuazione di misura.
+
+$$
+    \mu_{d_B}=0.073446254984543
+$$
+
+\subsection{Vincolo di $\mu_d$ per la specifica di sovraelongazione}
+
+Utilizzando il luogo delle radici siamo riusciti a calcolare il valore massimo di $\mu_d$
 
 
 \end{document}

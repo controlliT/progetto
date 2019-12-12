@@ -140,7 +140,7 @@ omega_plot_max=10^5;
 
 %Definiamo le matrici A,B,C,D derivabili dalla forma di stato e dall\'uscita
 
-\%A è una 2x2 perchè devo moltiplicare per le tre equazioni di stato 2x1 e 
+%A è una 2x2 perchè devo moltiplicare per le tre equazioni di stato 2x1 e 
 %deve saltare fuori un 2x1 quindi 2x2 * 2x1 = 2x1
 A = [0, 0,                                                                                    ;
      1, -(2*(tab.x_equilibrio_2^2)*(tab.C_d*tab.u_equilibrio+tab.R_0)/abs(tab.x_equilibrio_2))];
@@ -599,6 +599,14 @@ grid on;
 %Il regolatore sul sistema linearizzato risponde in modo impeccabile
 %Il regolatore sul sistema non lineare funziona piuttosto bene in un
 %intorno della coppia di equilibrio.
+
+%Qui effettuo lo stepinfo sul sistema non lineare:
+nonlinear_stepinfo = stepinfo(out.sim_not_linear_y.Data, out.sim_time.Data,'SettlingTimeThreshold',0.01);
+disp(nonlinear_stepinfo);
+
+figure();
+plot(out.sim_time.Data, out.sim_not_linear_y.Data);
+grid on;
 
 
 %%
