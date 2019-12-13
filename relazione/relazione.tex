@@ -7,17 +7,18 @@
 
 \title{Progetto Controlli 3A}
 \author{
-Luca Bartolomei\\
-\texttt{0000825005}
-\and
-Federico Maria Macchiavelli\\
-\texttt{0000825621}
-\and
-Mattia Innocenti\\
-\texttt{0000825046}
-\and
-Andrea Proia\\
-\texttt{0000825784}}
+    Luca Bartolomei 
+    \texttt{0000825005}
+    \\
+    Federico Maria Macchiavelli 
+    \texttt{0000825621}
+    \\
+    Mattia Innocenti 
+    \texttt{0000825046}
+    \\
+    Andrea Proia 
+    \texttt{0000825784}
+}
 
 \date{Dicembre 2019}
 
@@ -57,10 +58,12 @@ Il sistema modella la pressione sul fondo del bacino come costante, mentre la va
 \begin{itemize}
     \item Pressione sul fondo del bacino ($x_1$): Una pressione positiva contribuisce ad aumentare la portata nel fondo del bacino
     \item Perdite di carico nella condotta ($-R_0 x_2 |x_2|$): Si tratta dell'attrito tra la condotta e l'acqua, che contribuisce a diminuire la portata
-    \item Valvola di controllo ($-C_d u x_2 |x_2|$): Consiste in una valvola che se opportunamente controllata permette di aumentare l'effetto di perdita di carico nella condotta.
+    \item Valvola di controllo ($-C_d u x_2 |x_2|$): Consiste in una valvola che se opportunamente controllata permette di aumentare l'effetto di perdita di carico nella condotta. L'effetto della valvola è condizionata dalla portata attuale.
 \end{itemize}
 
 L'uscita $y=-\eta x_1 x_2$ rappresenta la potenza elettrica generata dall'impianto. Viene calcolata come la potenza fluidica $x_1 x_2$ e moltiplicata per un coefficiente che indica l'efficienza di conversione tra energia meccanica e energia elettrica. Il segno negativo è dovuto al trasduttore utilizzato.
+
+%TODO: nota sul gradino negativo necessario per la logica negativa del sistema
 
 \subsection{Progettazione fisica del controllo}
 
@@ -72,7 +75,7 @@ Infine anche il segnale di controllo sarà di natura elettrica, quindi necessiti
 L'azienda che ci ha assunto ha fornito delle specifiche sul sistema di controllo andremmo a progettare:
 
 \begin{itemize}
-    \item Errore a regime nullo ($e_{inf}=0$) per un gradino di ampiezza 30
+    \item Errore a regime nullo ($e_{\infty}=0$) per un gradino di ampiezza 30
     \item Sovraelongazione percentuale minore del 5\%
     \item Tempo di assestamento all'1\% minore di 0.3 sec
     \item Attenuazione dei rumori di misura di almeno 30 volte
@@ -154,10 +157,10 @@ Il guadagno $\mu_s$ risulta libero e può essere usato successivamente se ci rit
 Proviamo a disegnare il diagramma di Bode per verificare in quale scenario ci siamo collocati.
 
 \begin{center}
-    \includegraphics[scale=0.6]{figure2.eps}
+    \includegraphics[scale=0.8]{figure2.eps}
 \end{center}
 
-Visto che il margine di fase risulta insufficiente per tutto l'intervallo di attraversamento, deduciamo che siamo caduti in uno scenario di tipo A.
+Osservando il diagramma di Bode della fase deduciamo che siamo caduti in uno scenario di tipo B, in quanto non esiste un range di pulsazioni $\omega$ in cui $G_e(j\omega)$ rispetta il vincolo sul margine di fase.
 
 \subsection{Progettazione della rete regolatrice dinamica}
 
@@ -175,11 +178,11 @@ Rimane il problema di dove porre lo zero e il polo nel piano complesso:
     \item Il polo deve essere collocato in alta frequenza (molto lontano dall'asse degli immaginari) per non disturbare l'effetto dello zero.
 \end{itemize}
 
-Potremmo utilizzare le formule di inversione per calcolare $\alpha$ e $\tau$. In questo caso abbiamo preferito l'utilizzo del luogo delle radici per il rispetto dei vincoli di sovraelongazione e di tempo di assestamento, mentre abbiamo osservato il diagramma di bode della funzione di trasferimento $G_e = R_s * G$ per calcolare il guadagno necessario per soddisfare il vincolo sull'attenuazione di misura.
+Potremmo utilizzare le formule di inversione per calcolare $\alpha$ e $\tau$. In questo caso abbiamo preferito l'utilizzo del luogo delle radici per il rispetto dei vincoli di sovraelongazione e di tempo di assestamento, mentre abbiamo osservato il diagramma di Bode della funzione di trasferimento $G_e = R_s * G$ per calcolare il guadagno necessario per soddisfare il vincolo sull'attenuazione di misura.
 
 \subsection{Attenuazione necessaria per il rumore di misura}
 
-Utilizzando le funzioni di matlab e il diagramma di Bode, abbiamo calcolato il valore massimo di $\mu_d$, ancora libero in quanto non usato nel regolatore statico, per rispettare il vincolo di attenuazione di misura.
+Utilizzando le funzioni di Matlab e il diagramma di Bode, abbiamo calcolato il valore massimo di $\mu_d$, ancora libero in quanto non usato nel regolatore statico, per rispettare il vincolo di attenuazione di misura.
 
 $$
     \mu_{d_B}=0.073446254984543
@@ -190,10 +193,10 @@ $$
 Utilizzando il luogo delle radici siamo riusciti a calcolare il valore \textbf{massimo} di $\mu_d$ per rispettare il vincolo di sovraelongazione.
 
 \begin{center}
-    \includegraphics[scale=0.8]{figure4.eps}
+    \includegraphics[scale=0.7]{figure4.eps}
 \end{center}
 Infatti andando in retroazione si vengono a creare due poli complessi coniugati che possono violare i vincoli di sovraelongazione.\\
-Tenendo il guadagno sotto una soglia massima data da $\xi=0.69$, perfettamente visibile utilizzando il \textbf{grid on} abbiamo riscontrato un $\mu_d$:
+Tenendo il guadagno sotto una soglia massima data da $\xi=0.69$, perfettamente visibile utilizzando il \texttt{grid on} abbiamo riscontrato un $\mu_d$:
 
 $$
     \mu_{d_S} = 0.106
@@ -223,7 +226,94 @@ $$
 \end{cases}
 $$
 
-Abbiamo scelto come 
+Abbiamo scelto $\mu_{d_B}$ come guadagno, in quanto rispetta i vincoli.
+
+%TODO: aggiornare figura 3 levando il vincolo arancione
+
+\begin{center}
+    \includegraphics[scale=0.6]{figure3.eps}
+\end{center}
+
+\newpage
+
+\section{Verifica delle performance}
+
+\subsection{Verifica delle performance sul sistema linearizzato}
+
+Una volta ottenuto il regolatore, abbiamo imposto la retroazione:
+$$
+    \begin{array}{lcl}
+        F & = & \frac{L}{1+L} \\
+        L & = & \mu_d * R_d * R_s * G
+    \end{array}
+$$
+
+\subsubsection{Verifica di $e_\infty=0$, $S\%$, $T_{a_0}$, $M_f$}
+
+\begin{center}
+    \includegraphics[scale=0.7]{figure5.eps}
+\end{center}
+
+Si può notare l'aggiunta delle risposte al gradino con le incertezze sulla rete anticipatrice fino al 40\%.\\
+
+Abbiamo testato la rete mediante \texttt{stepinfo}, impostando il gradino avente ampiezza $W$, mediante comando \texttt{StepAmplitude} e rilevazione del tempo di assestamento all'1\% mediante comando \texttt{SettlingTimeThreshold}. Testiamo la rete con l'incertezza al 40\%:
+
+\begin{itemize}
+    \item \textbf{SettlingTime}: 0.0299 sec
+    \item \textbf{Overshoot}: 4.1693 \%
+\end{itemize}
+
+Di conseguenza le specifiche di tempo di assestamento, margine di fase e di sovraelongazione sono rispettate. Guardando il grafico di step, la specifica $e_\infty=0$ sembra rispettata. 
+
+\subsubsection{Verifica $B_n$}
+
+La verifica sull'attenuazione dei rumori di misura viene effettuata mediante diagramma di Bode.
+
+\begin{center}
+    \includegraphics[scale=0.9]{figure6.eps}
+\end{center}
+
+Si può notare che alla pulsazione $\omega_n=1000$ abbiamo un'attenuazione di -30db, soddisfando la specifica.\\\\
+
+Si può vedere che la specifica viene rispettata andando a simulare il sistema tramite Simulink, con in quale è possibile inrodurre un errore di misura (\texttt{sineWave}).
+
+\subsubsection{Conclusioni sull'analisi}
+
+Il regolatore progettato rispetta tutte le specifiche richieste, almeno per quanto riguarda il sistema linearizzato.
+
+\newpage
+
+\subsection{Verifica delle performance con il sistema non lineare}
+Abbiamo effettuato delle verifiche sulle performance del regolatore sul sistema non lineare. Abbiamo testato un ingresso a gradino con ampiezza $W$ e un altra simulazione con ampiezza $-W$.
+
+\subsubsection{Performance con $W$}
+
+\begin{center}
+    \includegraphics[scale=0.9]{figure8.eps}
+\end{center}
+
+Dal grafico si nota che il regolatore \textbf{non funziona} a dovere. Ciò è dovuto al sensore a logica \textbf{negativa} e alla natura non lineare del sistema: il prodotto $-C_d u x_2 |x_2|$ presente in $\dot{x_2}$ crea una \textbf{dipendenza} tra $u$ e $x_2$. Nel sistema lineare invece il prodotto precedente viene \textbf{sostituito da una somma}, \textbf{rimuovendo la dipenzenza tra i due}.\\\\
+Cosi facendo il sistema linearizzato ammette gradini positivi, mentre il sistema non lineare, sotto le condizioni iniziali, \textbf{non li ammette}. Potremmo interpretare fisicamente il fenomeno come un comando di \textbf{assorbire} energia, invece che produrla, invertendo la portata, dato che la pressione è costante.
+
+\newpage
+
+\subsubsection{Performance con $-W$}
+
+Se ripetiamo il testo con $-W$, dopo un breve transitorio, non previsto nel sistema linearizzato, l'uscita si assesta sul valore desiderato:
+
+\begin{center}
+    \includegraphics[scale=0.8]{figure9.eps}
+\end{center}
+
+Il risultato va preso con le pinze, in quanto abbiamo che la valvola, invece che aumentare le perdite di carico, le \textbf{riduce}.
+
+\subsubsection{Nota sulla fisica realizzabilità}
+Se volessimo che la valvola aumenti soltanto le perdite, dovremmo imporre $u\geq0$ e forti vincoli sulla potenza massima generata dal sistema ($W$), come ci aspetteremmo da un impianto idroelettrico reale.
+
+\section{Conclusioni}
+
+Il sistema linearizzato è stato correttamente regolato in base alle specifiche date, tenendo in conto anche della specifica facoltativa $T_{a_0}$. Inoltre abbiamo analizzato il sistema mediante gradino.\\
+
+Il sistema non lineare si comporta differentemente, a seconda del segno dell'ampiezza del gradino all'ingresso. Ciò è causato dalla logica negativa del sensore e da effetti non lineari, non presenti nel sistema linearizzato.
 
 \end{document}
-
