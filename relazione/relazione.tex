@@ -34,18 +34,21 @@ Progettazione di un controllore per un impianto idroelettrico, mediante l'utiliz
 L'impianto idroelettrico è modellato come sistema SISO avente due variabili di stato (la pressione  dell’acqua sul fondo del bacino ($x_1$) e la portata in uscita dal bacino ($x_2$ )). Le equazioni differenziali che modellano le variabili di stato sono di tipo non lineare:
 
 $$
-\dot{x}_1 = 0
+\begin{array}{lcl}
+    \dot{x}_1 & = & 0 \\
+    \dot{x}_2 & = & -C_d u x_2 |x_2| -R_0 x_2 |x_2| + x_1
+\end{array}
 $$
 
-$$
-\dot{x}_2 = -C_d u x_2 |x_2| -R_0 x_2 |x_2| + x_1
-$$
-
-L'uscita del sistema viene modellata secondo la formula:
+L'uscita del sistema viene modellata secondo la formula,:
 
 $$
-y=-\eta x_1 x_2
+\begin{array}{lcl}
+    y & = & -\eta x_1 x_2
+\end{array}
 $$
+
+Anche la $y$ è di tipo non lineare.
 
 \subsection{Significato fisico}
 
@@ -61,7 +64,7 @@ L'uscita $y=-\eta x_1 x_2$ rappresenta la potenza elettrica generata dall'impian
 
 \subsection{Progettazione fisica del controllo}
 
-Ragionando in termini di progettazione reale, il segnale ricevuto dal trasduttore di potenza sarà di tipo elettrico, il quale verrà letto da un circuito elettronico, il quale sarà realizzato mediante la rete regolatrice da noi progettata. 
+Ragionando in termini di progettazione reale, il segnale ricevuto dal trasduttore di potenza sarà di tipo elettrico, il quale verrà campionato da un circuito elettronico, il quale sarà realizzato mediante la rete regolatrice da noi progettata. 
 Infine anche il segnale di controllo sarà di natura elettrica, quindi necessitiamo di un attuatore, per esempio un motore elettrico o un solenoide, magari con circuiteria aggiuntiva di potenza e di un sistema meccanico per l'interacciamento valvola-motore, per controllare la valvola, oppure sostituire una valvola con una elettro-valvola, avente attuatore già incluso.
 
 \section{Specifiche}
@@ -184,8 +187,43 @@ $$
 
 \subsection{Vincolo di $\mu_d$ per la specifica di sovraelongazione}
 
-Utilizzando il luogo delle radici siamo riusciti a calcolare il valore massimo di $\mu_d$
+Utilizzando il luogo delle radici siamo riusciti a calcolare il valore \textbf{massimo} di $\mu_d$ per rispettare il vincolo di sovraelongazione.
 
+\begin{center}
+    \includegraphics[scale=0.8]{figure4.eps}
+\end{center}
+Infatti andando in retroazione si vengono a creare due poli complessi coniugati che possono violare i vincoli di sovraelongazione.\\
+Tenendo il guadagno sotto una soglia massima data da $\xi=0.69$, perfettamente visibile utilizzando il \textbf{grid on} abbiamo riscontrato un $\mu_d$:
+
+$$
+    \mu_{d_S} = 0.106
+$$
+
+Che risulta meno stringente rispetto al vincolo $\mu_{d_B}$.
+
+\subsection{Vincolo di $\mu_d$ per il tempo di assestamento}
+
+Un ultimo vincolo del guadagno è dato dal tempo di assestamento, il quale si traduce in un asse parallelo all'asse degli immaginari. Ciò comporta un valore \textbf{minimo} che il guadagno deve rispettare.\\
+
+Sempre dalla figura del luogo delle radici, dopo aver disegnato gli assi del tempo di assestamento, si ricava un vincolo per $\mu_d$:
+
+$$
+    \mu_{d_T} = 0.0498
+$$
+
+\subsection{Selezione di $\mu_d$}
+
+In conclusione abbiamo preso un guadagno $\mu_d$ tale che rispetti i vincoli $\mu_{d_B}$, $\mu_{d_S}$, $\mu_{d_T}$:
+
+$$
+\begin{cases}
+    \mu_{d_B}\geq\mu_d\\
+    \mu_{d_S}\geq\mu_d\\
+    \mu_{d_T}\leq\mu_d
+\end{cases}
+$$
+
+Abbiamo scelto come 
 
 \end{document}
 
