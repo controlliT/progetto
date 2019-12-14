@@ -196,17 +196,12 @@ disp(CG_stepinfo);
 %Nuova finestra grafica
 figure(2);
 
-%Non posso disegnare il vincolo di attraversamento minimo:
-%Dal luogo delle radici, si nota che la pulsazione naturale dei poli
-%complessi coniugati (quasi)dominanti risulta spostata rispetto alla 
-%pulsazione di attraversamento.
+%Vincolo sulla omega_c_min
+patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
 
-% %Vincolo sulla omega_c_min
-% patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
-% 
-% %Indico la frequenza di attraversamento minima
-% hold on;
-% text(omega_plot_min*10,-100, sprintf('w_c^*>=%.2f rad/sec', omega_c_min));
+%Indico la frequenza di attraversamento minima
+hold on;
+text(omega_plot_min*10,-100, sprintf('w_c^*>=%.2f rad/sec', omega_c_min));
 
 % %Vincolo sulla omega_c_min opzionale
 % hold on;
@@ -282,7 +277,7 @@ grid on;
 title("Poli e zeri di Rs*G");
 
 
-%Trucco: Metto lo zero della rete anticipatrice vicino (scarto 40%)
+%Trucco: Metto lo zero della rete anticipatrice vicino (scarto 30%)
 %al polo in -3.333, mentre il polo della rete anticipatrice lo sposto molto
 %più a sinistra dell'asse T_axis_fac: così facendo il polo a -3.333 si
 %annulla con lo zero della rete, ciò ci consente di guadagnare il Mf 
@@ -325,9 +320,7 @@ G_e_1_minus_40 = R_d_ant_minus_40 * G_e;
 figure(3);
 
 %Non posso disegnare il vincolo di attraversamento minimo:
-%Dal luogo delle radici, si nota che la pulsazione naturale dei poli
-%complessi coniugati (quasi)dominanti risulta spostata rispetto alla 
-%pulsazione di attraversamento.
+%I poli complessi coniugati 
 
 % %Vincolo sulla omega_c_min
 % patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
@@ -612,10 +605,10 @@ grid on;
 %%
 %Stampa dei grafici per latex
 
-for index = 1:6
-    figure(index);
-    print(sprintf("figure/figure%d.eps", index), '-depsc');  
-end
+% for index = 1:6
+%     figure(index);
+%     print(sprintf("figure/figure%d.eps", index), '-depsc');  
+% end
 
 %%
 % Grafici sistema non lineare.

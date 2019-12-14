@@ -203,9 +203,9 @@ patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'r
 hold on;
 text(omega_plot_min*10,-100, sprintf('w_c^*>=%.2f rad/sec', omega_c_min));
 
-%Vincolo sulla omega_c_min opzionale
-hold on;
-patch([omega_c_min,omega_c_min_fac,omega_c_min_fac,omega_c_min],[-200,-200,0,0], [0.9100, 0.4100, 0.1700] ,'FaceAlpha',0.3,'EdgeAlpha',0); 
+% %Vincolo sulla omega_c_min opzionale
+% hold on;
+% patch([omega_c_min,omega_c_min_fac,omega_c_min_fac,omega_c_min],[-200,-200,0,0], [0.9100, 0.4100, 0.1700] ,'FaceAlpha',0.3,'EdgeAlpha',0); 
 
 %Vincolo sulla omega_c_max
 hold on;
@@ -236,7 +236,7 @@ patch([omega_c_min,omega_c_max,omega_c_max,omega_c_min],[-180+Mf,-180+Mf,-180,-1
 %Ho bisogno di un polo per il vincolo numero 1 (e_inf = 0)
 %Il guadagno statico resta libero: verrà modificato se necessario.
 %Aggiungo un altro polo perchè ho bisogno di più pendenza
-R_s = 1/s^2;
+R_s = 1/s;
 G_e = R_s*G;
 
 %Stampo gli zeri e i poli di G_e 
@@ -258,36 +258,41 @@ title("Bode di G e di G con regolatore statico");
 %%
 %--Progettazione della rete regolatrice dinamica--
 
-%--------------------------------------------------------------------------
-% omega_c_star_ant = 125;
-% Mf_ant = Mf + 10;
-% 
-% %Ricavo i dati di attraversamento di G_e
-% [Mag_G_e_omega_c_star_ant,phase_G_e_omega_c_star_ant,omega_c_star_ant]=bode(G_e, omega_c_star_ant);
-% 
-% M_star_ant = 1/Mag_G_e_omega_c_star_ant;
-% phi_star_ant = Mf_ant-180-phase_G_e_omega_c_star_ant;
-% 
-% tau_rete_ant = (M_star_ant-cos(phi_star_ant*pi/180))/(omega_c_star_ant*sin(phi_star_ant*pi/180));
-% tau_alpha_rete_ant = (cos(phi_star_ant*pi/180)-1/M_star_ant)/(omega_c_star_ant*sin(phi_star_ant*pi/180));
-% alpha_rete_ant = tau_alpha_rete_ant/tau_rete_ant;
+%Prendo una omega nel range di attraversamento
+omega_c_star_ant = 800;
+%Richiedo un margine di fase maggiore per robustezza
+Mf_ant = Mf+10;
 
-% %Ricavo il regolatore dinamico (anticipatore).
-% R_d_ant = (1+s*tau_rete_ant)^2/(1+tau_alpha_rete_ant*s)^2;
+%Ricavo i dati di attraversamento di G_e
+[Mag_G_e_omega_c_star_ant,phase_G_e_omega_c_star_ant,omega_c_star_ant]=bode(G_e, omega_c_star_ant);
 
+M_star_ant = 1/Mag_G_e_omega_c_star_ant;
+phi_star_ant = Mf_ant-180-phase_G_e_omega_c_star_ant;
 
-% G_e_1 = R_d_ant * G_e;
-%--------------------------------------------------------------------------
-
-%Progettata con Control System Designer
-tau_rete_ant = 1/8.34;
-tau_alpha_rete_ant = 1/5910;
+tau_rete_ant = (M_star_ant-cos(phi_star_ant*pi/180))/(omega_c_star_ant*sin(phi_star_ant*pi/180));
+tau_alpha_rete_ant = (cos(phi_star_ant*pi/180)-1/M_star_ant)/(omega_c_star_ant*sin(phi_star_ant*pi/180));
 alpha_rete_ant = tau_alpha_rete_ant/tau_rete_ant;
 
+%Checks
+%M_star_ant > 1, 0 < phi_star_ant < 90 gradi, 
+%cos(phi_star_ant*pi/180) > 1/M_star_ant
 
-R_d_ant = (1+s*tau_rete_ant)^2/(1+tau_alpha_rete_ant*s)^2;
+if M_star_ant <= 1
+    error("M* <= 1 (%f)", M_star_ant);
+elseif phi_star_ant < 0
+    error("phi* < 0 (%f)", phi_star_ant);
+elseif phi_star_ant > 90
+    error("phi* > 90 (%f)", phi_star_ant);
+elseif cos(phi_star_ant*pi/180) <= 1/M_star_ant
+    error("cos(phi*) <= 1/M* (%f <= %f)", cos(phi_star_ant*pi/180), 1/M_star_ant);
+end
+
+
+%Ricavo il regolatore dinamico (anticipatore).
+R_d_ant = (1+s*tau_rete_ant)/(1+tau_alpha_rete_ant*s);
 
 G_e_1 = R_d_ant * G_e;
+
 
 %Stampo il grafico per vedere in che scenario siamo caduti.
 %Ricavo i dati sulla G_e_1
@@ -303,9 +308,9 @@ patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'r
 hold on;
 text(omega_plot_min*10,-100, sprintf('w_c^*>=%.2f rad/sec', omega_c_min));
 
-%Vincolo sulla omega_c_min opzionale
-hold on;
-patch([omega_c_min,omega_c_min_fac,omega_c_min_fac,omega_c_min],[-200,-200,0,0], [0.9100, 0.4100, 0.1700] ,'FaceAlpha',0.3,'EdgeAlpha',0); 
+% %Vincolo sulla omega_c_min opzionale
+% hold on;
+% patch([omega_c_min,omega_c_min_fac,omega_c_min_fac,omega_c_min],[-200,-200,0,0], [0.9100, 0.4100, 0.1700] ,'FaceAlpha',0.3,'EdgeAlpha',0); 
 
 %Vincolo sulla omega_c_max
 hold on;
@@ -355,20 +360,9 @@ zpk(G_e_1/(1+G_e_1))
 %--------------------------------------------------------------------------
 %Soluzione: modifico il guadagno.
 
-%Devo calcolare tre guadagni: il primo è il guadagno massimo per cui ho
-%rispettato il vincolo sulla misura, il secondo e il terzo riguardano le
-%specifiche dinamiche e vanno calcolati attraverso il luogo delle radici.
-%In particolare il primo e il secondo riguardano un massimo, mentre il
-%terzo riguarda un minimo.
-
-%In teoria ci sarebbe un quarto guadagno di minimo riguardo la
-%cancellazione del polo nell'orgine ma è trascurabile rispetto agli altri.
-
-%Calcoliamo il primo guadagno
-
 %Settare questa opzione per aggiungere un margine di attenuazione ulteriore
 %Si tratta di un offset negativo.
-mu_d_offset_db = 20;
+mu_d_offset_db = 1;
 
 %Ricavo il valore del modulo di G_e_1 in omega_n
 [mag_G_e_1_omega_n,phase_G_e_1_omega_n,omega_n]=bode(G_e_1, tab.omega_n);

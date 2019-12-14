@@ -67,8 +67,8 @@ L'uscita $y=-\eta x_1 x_2$ rappresenta la potenza elettrica generata dall'impian
 
 \subsection{Progettazione fisica del controllo}
 
-Ragionando in termini di progettazione reale, il segnale ricevuto dal trasduttore di potenza sarà di tipo elettrico, il quale verrà campionato da un circuito elettronico, il quale sarà realizzato mediante la rete regolatrice da noi progettata. 
-Infine anche il segnale di controllo sarà di natura elettrica, quindi necessitiamo di un attuatore, per esempio un motore elettrico o un solenoide, magari con circuiteria aggiuntiva di potenza e di un sistema meccanico per l'interacciamento valvola-motore, per controllare la valvola, oppure sostituire una valvola con una elettro-valvola, avente attuatore già incluso.
+Ragionando in termini di progettazione reale, il segnale ricevuto dal trasduttore di potenza sarà di tipo elettrico, il quale verrà campionato da un circuito elettronico, realizzato mediante la rete regolatrice da noi progettata. 
+Infine anche il segnale di controllo sarà di natura elettrica, quindi necessitiamo di un attuatore, per esempio un motore elettrico o un solenoide, magari con circuiteria aggiuntiva di potenza e di un sistema meccanico per l'interfacciamento valvola-motore, per controllare la valvola, oppure sostituire una valvola con una elettro-valvola, avente attuatore già incluso.
 
 \section{Specifiche}
 
@@ -78,7 +78,7 @@ L'azienda che ci ha assunto ha fornito delle specifiche sul sistema di controllo
     \item Errore a regime nullo ($e_{\infty}=0$) per un gradino di ampiezza 30
     \item Sovraelongazione percentuale minore del 5\%
     \item Tempo di assestamento all'1\% minore di 0.3 sec
-    \item Attenuazione dei rumori di misura di almeno 30 volte
+    \item Attenuazione dei rumori di misura di almeno 30 volte (a partire da una pulsazione $\omega_n=1000 rad/s$)
     \item Margine di fase di almeno 45 gradi
 \end{itemize}
 
@@ -152,7 +152,7 @@ $$
 R_s(s)=\frac{1}{s}
 $$
 
-Il guadagno $\mu_s$ risulta libero e può essere usato successivamente se ci ritroveremmo in uno scenario A.
+Il guadagno $\mu_s$ risulta libero e può essere usato successivamente se ci ritroveremo in uno scenario A.
 
 Proviamo a disegnare il diagramma di Bode per verificare in quale scenario ci siamo collocati.
 
@@ -254,7 +254,7 @@ $$
     \includegraphics[scale=0.7]{figure5.eps}
 \end{center}
 
-Si può notare l'aggiunta delle risposte al gradino con le incertezze sulla rete anticipatrice fino al 40\%.\\
+Si può notare l'aggiunta delle risposte al gradino con le incertezze sulla rete anticipatrice fino al 40\%. L'aumento della sovraelongazione per F-40\% è dovuta allo spostamento dello zero, il quale influisce sulla posizione dei poli c.c.\\
 
 Abbiamo testato la rete mediante \texttt{stepinfo}, impostando il gradino avente ampiezza $W$, mediante comando \texttt{StepAmplitude} e rilevazione del tempo di assestamento all'1\% mediante comando \texttt{SettlingTimeThreshold}. Testiamo la rete con l'incertezza al 40\%:
 
@@ -265,7 +265,7 @@ Abbiamo testato la rete mediante \texttt{stepinfo}, impostando il gradino avente
 
 Di conseguenza le specifiche di tempo di assestamento, margine di fase e di sovraelongazione sono rispettate. Guardando il grafico di step, la specifica $e_\infty=0$ sembra rispettata. 
 
-\subsubsection{Verifica $B_n$}
+\subsubsection{Verifica attenuazione disturbo di misura ($B_n$)}
 
 La verifica sull'attenuazione dei rumori di misura viene effettuata mediante diagramma di Bode.
 
@@ -273,9 +273,9 @@ La verifica sull'attenuazione dei rumori di misura viene effettuata mediante dia
     \includegraphics[scale=0.9]{figure6.eps}
 \end{center}
 
-Si può notare che alla pulsazione $\omega_n=1000$ abbiamo un'attenuazione di -30db, soddisfando la specifica.\\\\
+Si può notare che alla pulsazione $\omega_n=1000 rad/s$ abbiamo un'attenuazione di -30db, soddisfando la specifica.\\\\
 
-Si può vedere che la specifica viene rispettata andando a simulare il sistema tramite Simulink, con in quale è possibile inrodurre un errore di misura (\texttt{sineWave}).
+Si può vedere che la specifica viene rispettata andando a simulare il sistema tramite Simulink, con in quale è possibile introdurre un errore di misura (\texttt{sineWave}).
 
 \subsubsection{Conclusioni sull'analisi}
 
@@ -299,7 +299,7 @@ Cosi facendo il sistema linearizzato ammette gradini positivi, mentre il sistema
 
 \subsubsection{Performance con $-W$}
 
-Se ripetiamo il testo con $-W$, dopo un breve transitorio, non previsto nel sistema linearizzato, l'uscita si assesta sul valore desiderato:
+Se ripetiamo il test con $-W$, dopo un breve transitorio, non previsto nel sistema linearizzato, l'uscita si assesta sul valore desiderato:
 
 \begin{center}
     \includegraphics[scale=0.8]{figure9.eps}
