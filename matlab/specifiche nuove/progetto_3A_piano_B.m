@@ -11,6 +11,10 @@
 %Mattia Innocenti 0000825046
 %Luca Bartolomei 0000825005
 
+%Pulizia variabili
+clear all;
+%Chiudo tutte le finestre
+close all;
 
 %%
 %--Caratteristiche impianto--
@@ -259,9 +263,9 @@ title("Bode di G e di G con regolatore statico");
 %--Progettazione della rete regolatrice dinamica--
 
 %Prendo una omega nel range di attraversamento
-omega_c_star_ant = 800;
+omega_c_star_ant = 900;
 %Richiedo un margine di fase maggiore per robustezza
-Mf_ant = Mf+10;
+Mf_ant = Mf+1;
 
 %Ricavo i dati di attraversamento di G_e
 [Mag_G_e_omega_c_star_ant,phase_G_e_omega_c_star_ant,omega_c_star_ant]=bode(G_e, omega_c_star_ant);
@@ -390,13 +394,6 @@ title("Bode di G con i vari regolatori fino a L");
 
 %Il grafico sembra soddisfare le specifiche.
 
-%NOTA IMPORTANTE: sembrerebbe che dal grafico non vengano soddisfatte le
-%specifiche di tempo di assestamento facoltative. In realtà bisogna tenere
-%in conto la chiusura in retroazione di L:
-%il margine di fase nell'attraversamento assume un altro valore e di
-%conseguenza anche omega_c_min si sposta: andando a plottare i vincoli
-%sulla F si nota che viene rispettato anche questo vincolo.
-
 %Calcolo R
 R = mu_d * R_d_ant * R_s;
 
@@ -445,9 +442,8 @@ grid on;
 F_stepinfo = stepinfo(Y_F, T_F,'SettlingTimeThreshold',0.01);
 disp(F_stepinfo);
 
-%Dallo stepinfo abbiamo un Tempo di assestamento di 0.0321 sec e una
-%sovraelongazione percentuale dello 0%, valori al di sotto dei vincoli:
-%inoltre la specifica opzionale di tempo di assestamento è stata risolta.
+%Dallo stepinfo abbiamo un Tempo di assestamento di 0.2452 sec e una
+%sovraelongazione percentuale dello 1.23%, valori al di sotto dei vincoli
 
 %Rappresento con il diagramma di bode F e CG
 figure(6);
@@ -463,21 +459,19 @@ grid on;
 
 %Dal grafico si osserva che:
 %Il vincolo di misura viene rispettato: -30db circa in 1000 rad/s
-%Il vincolo di sovraelongazione viene rispettato: alla pulsazione di taglio
-%ho un valore di -70 gradi.
-%Non riesco a capire se il vincolo di tempo di assestamento viene
-%rispettato, lo verifico dalla risposta a gradino nel grafico precedente.
+%Il vincolo di sovraelongazione viene rispettato: quasi 90 gradi di Mf.
+%Vincolo di tempo di assestamento rispettato.
 %L'errore a regime è nullo, sempre verificato dal grafico precedente.
 
 %%
 %CONCLUSIONI
 
 %Specifiche F:
-%Tempo assestamento: 0.0321 sec
-%Sovraelongazione percentuale: 0%
+%Tempo assestamento: 0.2452 sec
+%Sovraelongazione percentuale: 1.23%
 %Attenuazione errore di misura: 30db
 %Errore e_inf = 0
-%Margine di fase: 70 gradi
+%Margine di fase: >85 gradi
 
 %Specifiche G in anello chiuso:
 %Tempo assestamento: 0.000515 sec
@@ -497,7 +491,7 @@ grid on;
 %PROVA IN SIMULINK
 %open('progetto_simulink_new.slx')
 
-%Il regolatore sul sistema linearizzato risponde in modo impeccabile
+%Il regolatore sul sistema linearizzato risponde come progettato.
 %Il regolatore sul sistema non lineare funziona piuttosto bene in un
 %intorno della coppia di equilibrio.
 

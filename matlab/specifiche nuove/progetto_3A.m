@@ -11,6 +11,10 @@
 %Mattia Innocenti 0000825046
 %Luca Bartolomei 0000825005
 
+%Pulizia variabili
+%clear all;
+%Chiudo tutte le finestre
+close all;
 
 %%
 %--Caratteristiche impianto--
@@ -196,17 +200,17 @@ disp(CG_stepinfo);
 %Nuova finestra grafica
 figure(2);
 
-%Non posso disegnare il vincolo di attraversamento minimo:
+%Non dovrei disegnare il vincolo di attraversamento minimo:
 %Dal luogo delle radici, si nota che la pulsazione naturale dei poli
 %complessi coniugati (quasi)dominanti risulta spostata rispetto alla 
 %pulsazione di attraversamento.
 
-% %Vincolo sulla omega_c_min
-% patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
-% 
-% %Indico la frequenza di attraversamento minima
-% hold on;
-% text(omega_plot_min*10,-100, sprintf('w_c^*>=%.2f rad/sec', omega_c_min));
+%Vincolo sulla omega_c_min
+patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Indico la frequenza di attraversamento minima
+hold on;
+text(omega_plot_min*10,-100, sprintf('w_c^*>=%.2f rad/sec', omega_c_min));
 
 % %Vincolo sulla omega_c_min opzionale
 % hold on;
@@ -281,42 +285,34 @@ legend("", "Vincolo T_a", "Vincolo T_a facoltativo");
 grid on;
 title("Poli e zeri di Rs*G");
 
-
-%Trucco: Metto lo zero della rete anticipatrice vicino (scarto 40%)
-%al polo in -3.333, mentre il polo della rete anticipatrice lo sposto molto
-%più a sinistra dell'asse T_axis_fac: così facendo il polo a -3.333 si
-%annulla con lo zero della rete, ciò ci consente di guadagnare il Mf 
-%necessario per ricadere in uno scenario A.
-
-%PS: In retroazione succede una cosa differente: lo zero aggiunto in -3.333
-%si annulla con il polo nell'origine, mentre il polo a -3.333 si sposta
-%molto a sinistra oltre la retta di tempo di assestamento facoltativo.
+%Procedimento: portiamo in quasi cancellazione il polo in -3.333 con lo
+%zero della rete anticipatrice in modo da ottenere i benefici dello zero
+%senza gli svantaggi. Ciò ci consente di guadagnare il Mf necessario per
+%ricadere in uno scenario A. Ovviamente imposto un margine di collocazione
+%dello zero in modo da essere un po' robusto ad incertezze. Purtroppo
+%l'incertezza richiede una modifica del guadagno a runtime.
 
 alpha_rete_ant = 0.01;
 tau_rete_ant = 1/3.333;
-tau_alpha_rete_ant = tau_rete_ant*alpha_rete_ant;
+tau_alpha_rete_ant = tau_rete_ant * alpha_rete_ant;
 
 %Ricavo il regolatore dinamico (anticipatore).
 R_d_ant = (1+s*tau_rete_ant)/(1+tau_alpha_rete_ant*s);
 
 %Ricavo dei regolatori aggiungivi di scarto.
 
+tau_rete_ant_plus_20 = 1/(1/tau_rete_ant + (1/tau_rete_ant)*0.2);
 tau_rete_ant_minus_20 = 1/(1/tau_rete_ant - (1/tau_rete_ant)*0.2);
-tau_rete_ant_minus_40 = 1/(1/tau_rete_ant - (1/tau_rete_ant)*0.4);
 
-%Tengo uno scarto più piccolo del 2% perchè poli più grandi
-tau_alpha_rete_ant_minus_20 = 1/(1/tau_alpha_rete_ant - (1/tau_alpha_rete_ant)*0.02);
-tau_alpha_rete_ant_minus_40 = 1/(1/tau_alpha_rete_ant - (1/tau_alpha_rete_ant)*0.04);
-
-R_d_ant_minus_20 = (1+s*tau_rete_ant_minus_20)/(1+tau_alpha_rete_ant_minus_20*s);
-R_d_ant_minus_40 = (1+s*tau_rete_ant_minus_40)/(1+tau_alpha_rete_ant_minus_40*s);
+R_d_ant_plus_20 = (1+s*tau_rete_ant_plus_20)/(1+tau_alpha_rete_ant*s);
+R_d_ant_minus_20 = (1+s*tau_rete_ant_minus_20)/(1+tau_alpha_rete_ant*s);
 
 %Imposto come rete la +20 in quanto è la più debole.
 
 %Stampo il grafico per vedere in che scenario siamo caduti.
 G_e_1 = R_d_ant * G_e;
+G_e_1_plus_20 = R_d_ant_plus_20 * G_e;
 G_e_1_minus_20 = R_d_ant_minus_20 * G_e;
-G_e_1_minus_40 = R_d_ant_minus_40 * G_e;
 
 %Ricavo i dati sulla G_e_1
 [mag_G_e_1,phase_G_e_1,omega_G_e_1]=bode(G_e_1,{omega_plot_min,omega_plot_max});
@@ -324,17 +320,17 @@ G_e_1_minus_40 = R_d_ant_minus_40 * G_e;
 %Nuova finestra grafica
 figure(3);
 
-%Non posso disegnare il vincolo di attraversamento minimo:
+%Non dovrei disegnare il vincolo di attraversamento minimo:
 %Dal luogo delle radici, si nota che la pulsazione naturale dei poli
 %complessi coniugati (quasi)dominanti risulta spostata rispetto alla 
 %pulsazione di attraversamento.
 
-% %Vincolo sulla omega_c_min
-% patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
-% 
-% %Indico la frequenza di attraversamento minima
-% hold on;
-% text(omega_plot_min*10,-100, sprintf('w_c^*>=%.2f rad/sec', omega_c_min));
+%Vincolo sulla omega_c_min
+patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'red','FaceAlpha',0.3,'EdgeAlpha',0); 
+
+%Indico la frequenza di attraversamento minima
+hold on;
+text(omega_plot_min*10,-100, sprintf('w_c^*>=%.2f rad/sec', omega_c_min));
 
 % %Vincolo sulla omega_c_min opzionale
 % hold on;
@@ -375,7 +371,7 @@ title("Bode di G con i vari regolatori");
 
 %COSA SUCCEDE IN ANELLO APERTO:
 zpk(G_e_1)
-%Il polo -3.333 viene cancellato con lo zero della rete (30% di scarto con
+%Il polo -3.333 viene cancellato con lo zero della rete (20% di scarto con
 %relativa coda di assestamento), mentre il polo della rete è trascurabile.
 %Rimane il polo nell'origine. Se collegassi G_e_1 in anello aperto
 %funzionerebbe come integratore, almeno per frequenze basse.
@@ -394,9 +390,6 @@ zpk(G_e_1/(1+G_e_1))
 %In particolare il primo e il secondo riguardano un massimo, mentre il
 %terzo riguarda un minimo.
 
-%In teoria ci sarebbe un quarto guadagno di minimo riguardo la
-%cancellazione del polo nell'orgine ma è trascurabile rispetto agli altri.
-
 %Calcoliamo il primo guadagno
 
 %Settare questa opzione per aggiungere un margine di attenuazione ulteriore
@@ -410,9 +403,21 @@ mag_G_e_1_omega_n_db = 20*log10(mag_G_e_1_omega_n);
 %Devo imporre un valore di mu tale che:
 %Mag_G_e_1_omega_n_db+mu_d_db=-B_n_db-mu_d_offset_db:
 
-mu_d_db=-B_n_db-mu_d_offset_db-mag_G_e_1_omega_n_db;
-mu_d_1 = 10^(mu_d_db/20);
+mu_d_1_db=-B_n_db-mu_d_offset_db-mag_G_e_1_omega_n_db;
+mu_d_1 = 10^(mu_d_1_db/20);
 
+%Faccio i calcoli anche per le reti con incertezza
+[mag_G_e_1_plus_20_omega_n,phase_G_e_1_plus_20_omega_n,omega_n]=bode(G_e_1_plus_20, tab.omega_n);
+[mag_G_e_1_minus_20_omega_n,phase_G_e_1_minus_20_omega_n,omega_n]=bode(G_e_1_minus_20, tab.omega_n);
+
+mag_G_e_1_plus_20_omega_n_db = 20*log10(mag_G_e_1_plus_20_omega_n);
+mag_G_e_1_minus_20_omega_n_db = 20*log10(mag_G_e_1_minus_20_omega_n);
+
+mu_d_1_plus_20_db=-B_n_db-mu_d_offset_db-mag_G_e_1_plus_20_omega_n_db;
+mu_d_1_plus_20 = 10^(mu_d_1_plus_20_db/20);
+
+mu_d_1_minus_20_db=-B_n_db-mu_d_offset_db-mag_G_e_1_minus_20_omega_n_db;
+mu_d_1_minus_20 = 10^(mu_d_1_minus_20_db/20);
 
 %Calcoliamo il secondo ed il terzo guadagno
 
@@ -451,10 +456,14 @@ title("Luogo delle radici di Rd*Rs*G");
 %la sovraelongazione, ma allo stesso tempo ho un guadagno minimo 
 %per spostare di una quantità minima il polo a -3.333 oltre T_axis_fac.
 
-
 %Dal luogo delle radici di evidenziano i seguenti guadagni:
 mu_d_2 = 0.106;
+mu_d_2_plus_20 = 0.161;
+mu_d_2_minus_20 = 0.105;
+
 mu_d_3 = 0.0498;
+mu_d_3_plus_20 = 0.0765;
+mu_d_3_minus_20 = 0.0505;
 
 %Il guadagno minimo mu_d_3 (0.0498) viene rispettato sia da mu_d_2 (0.1060)
 %sia da mu_d_1 (0.0598)
@@ -465,9 +474,13 @@ mu_d_3 = 0.0498;
 %Prendo un margine più elevato per eventuali incertezze.
 mu_d = mu_d_1;
 
+%Vale lo stesso per le reti con incertezze
+mu_d_plus_20 = mu_d_1_plus_20;
+mu_d_minus_20 = mu_d_1_minus_20;
+
 L = mu_d * G_e_1;
-L_minus_20 = mu_d * G_e_1_minus_20;
-L_minus_40 = mu_d * G_e_1_minus_40;
+L_plus_20 = mu_d_plus_20 * G_e_1_plus_20;
+L_minus_20 = mu_d_minus_20 * G_e_1_minus_20;
 
 %Plotto L
 figure(3);
@@ -482,27 +495,37 @@ title("Bode di G con i vari regolatori fino a L");
 %Il grafico sembra soddisfare le specifiche.
 
 %NOTA IMPORTANTE: sembrerebbe che dal grafico non vengano soddisfatte le
-%specifiche di tempo di assestamento facoltative. In realtà bisogna tenere
-%in conto la chiusura in retroazione di L:
-%il margine di fase nell'attraversamento assume un altro valore e di
-%conseguenza anche omega_c_min si sposta: andando a plottare i vincoli
-%sulla F si nota che viene rispettato anche questo vincolo.
+%specifiche di tempo di assestamento facoltative. In realtà ciò è dovuto
+%al polo della rete anticipatrice che supera la pulsazione di
+%attraversamento, modificando la pulsazione di attraversamento stessa.
+%L'unico modo per essere sicuri è osservare il luogo delle radici.
 
 %Calcolo R
 R = mu_d * R_d_ant * R_s;
+R_plus_20 = mu_d_plus_20 * R_d_ant_plus_20 * R_s;
+R_minus_20 = mu_d_minus_20 * R_d_ant_minus_20 * R_s;
 
 %Dati usati in simulink per la R.
 [NumR, DenR] = tfdata(R);
-NumR = NumR{1,1};
-DenR = DenR{1,1};
+NumR = NumR{1,1}; DenR = DenR{1,1};
+
+[NumR_plus_20, DenR_plus_20] = tfdata(R_plus_20);
+NumR_plus_20 = NumR_plus_20{1,1}; DenR_plus_20 = DenR_plus_20{1,1};
+
+[NumR_minus_20, DenR_minus_20] = tfdata(R_minus_20);
+NumR_minus_20 = NumR_minus_20{1,1}; DenR_minus_20 = DenR_minus_20{1,1};
 
 %L già calcolata
 
 %Dati usati in simulink per la L.
 [NumL, DenL] = tfdata(L);
-NumL = NumL{1,1};
-DenL = DenL{1,1};
+NumL = NumL{1,1}; DenL = DenL{1,1};
 
+[NumL_plus_20, DenL_plus_20] = tfdata(L_plus_20);
+NumL_plus_20 = NumL_plus_20{1,1}; DenL_plus_20 = DenL_plus_20{1,1};
+
+[NumL_minus_20, DenL_minus_20] = tfdata(L_minus_20);
+NumL_minus_20 = NumL_minus_20{1,1}; DenL_minus_20 = DenL_minus_20{1,1};
 
 %%
 %Chiusura dei loop
@@ -510,12 +533,14 @@ DenL = DenL{1,1};
 F=L/(1+L);
 
 %F con margini nella rete anticipatrice, guadagno non modificato.
+F_plus_20 = L_plus_20/(1+L_plus_20);
 F_minus_20 = L_minus_20/(1+L_minus_20);
-F_minus_40 = L_minus_40/(1+L_minus_40);
 
 
 %Ricavo informazioni
 [mag_F,phase_F,omega_F]=bode(F,{omega_plot_min,omega_plot_max});
+[mag_F_plus_20,phase_F_plus_20,omega_F_plus_20]=bode(F_plus_20,{omega_plot_min,omega_plot_max});
+[mag_F_minus_20,phase_F_minus_20,omega_F_minus_20]=bode(F_minus_20,{omega_plot_min,omega_plot_max});
 
 %Stampo gli zeri e i poli di F
 zpk(F)
@@ -527,13 +552,12 @@ title(sprintf("Risposta al gradino (W=%d) di L in anello chiuso", tab.W));
 legend("F");
 grid on;
 
-
 %Per muovere il cursore:
 %datacursormode on
 
 %Informazioni sullo step
 %Simulo di nuovo lo step ma in questo caso non plotto ma ricavo i dati:
-[Y_F,T_F] = step(F_minus_40, stepOption);
+[Y_F,T_F] = step(F_minus_20, stepOption);
 %Imposto un vincolo dell'1% sul tempo di assestamento e ricavo le info:
 F_stepinfo = stepinfo(Y_F, T_F,'SettlingTimeThreshold',0.01);
 disp(F_stepinfo);
@@ -548,12 +572,12 @@ disp(F_stepinfo);
 figure(5);
 hold on;
 %Alla 5 aggiungo anche gli step di margine.
-step(F_minus_20, stepOption);
+step(F_plus_20, stepOption);
 hold on;
-step(F_minus_40, stepOption);
+step(F_minus_20, stepOption);
 
 title(sprintf("Risposta al gradino (W=%d) di L in anello chiuso", tab.W));
-legend("F", "F-20", "F-40");
+legend("F", "F+20", "F-20");
 grid on;
 
 %Rappresento con il diagramma di bode F e CG
@@ -561,17 +585,20 @@ figure(6);
 
 margin(mag_F, phase_F, omega_F); 
 hold on;
+margin(mag_F_plus_20, phase_F_plus_20, omega_F_plus_20); 
+hold on;
+margin(mag_F_minus_20, phase_F_minus_20, omega_F_minus_20); 
+hold on;
 margin(mag_CG, phase_CG, omega_CG); 
 
 title("Confronto tra L e G in anello chiuso con Bode");
-legend("L closed loop", "G closed loop");
+legend("L closed loop", "L-20% closed loop", "L-40% closed loop",  "G closed loop");
 grid on;
 
 
 %Dal grafico si osserva che:
 %Il vincolo di misura viene rispettato: -30db circa in 1000 rad/s
-%Il vincolo di sovraelongazione viene rispettato: alla pulsazione di taglio
-%ho un valore di -75 gradi.
+%Il vincolo di sovraelongazione viene rispettato: Mf > 70 gradi.
 %Non riesco a capire se il vincolo di tempo di assestamento viene
 %rispettato, lo verifico dalla risposta a gradino nel grafico precedente.
 %L'errore a regime è nullo, sempre verificato dal grafico precedente.
@@ -584,7 +611,7 @@ grid on;
 %Sovraelongazione percentuale: 0%
 %Attenuazione errore di misura: 30db
 %Errore e_inf = 0
-%Margine di fase: 70 gradi
+%Margine di fase: >70 gradi
 
 %Specifiche G in anello chiuso:
 %Tempo assestamento: 0.000515 sec
@@ -612,10 +639,10 @@ grid on;
 %%
 %Stampa dei grafici per latex
 
-for index = 1:6
-    figure(index);
-    print(sprintf("figure/figure%d.eps", index), '-depsc');  
-end
+% for index = 1:6
+%     figure(index);
+%     print(sprintf("figure/figure%d.eps", index), '-depsc');  
+% end
 
 %%
 % Grafici sistema non lineare.
@@ -697,4 +724,3 @@ end
 % 
 % figure(4);
 % print("problema/rlocusG_e_2.eps", '-depsc');
-

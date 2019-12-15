@@ -11,6 +11,10 @@
 %Mattia Innocenti 0000825046
 %Luca Bartolomei 0000825005
 
+%Pulizia variabili
+clear all;
+%Chiudo tutte le finestre
+close all;
 
 %%
 %--Caratteristiche impianto--
@@ -83,9 +87,6 @@ Mf_s_perc=xi*100; %69.01
 
 %Mf>69.01° richiesta più limitatnte delle specifiche (Mf>45°).
 Mf = Mf_s_perc;
-
-%Chiedo una robustezza maggiore in Mf
-Mf = Mf_s_perc + 10;
 
 %Calcolo la frequenza di attraversamento minima attraverso la formula:
 %460/(Mf* T*) cioè 460/(45 * 0.3)
@@ -206,9 +207,9 @@ patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'r
 hold on;
 text(omega_plot_min*10,-100, sprintf('w_c^*>=%.2f rad/sec', omega_c_min));
 
-%Vincolo sulla omega_c_min opzionale
-hold on;
-patch([omega_c_min,omega_c_min_fac,omega_c_min_fac,omega_c_min],[-200,-200,0,0], [0.9100, 0.4100, 0.1700] ,'FaceAlpha',0.3,'EdgeAlpha',0); 
+% %Vincolo sulla omega_c_min opzionale
+% hold on;
+% patch([omega_c_min,omega_c_min_fac,omega_c_min_fac,omega_c_min],[-200,-200,0,0], [0.9100, 0.4100, 0.1700] ,'FaceAlpha',0.3,'EdgeAlpha',0); 
 
 %Vincolo sulla omega_c_max
 hold on;
@@ -238,6 +239,7 @@ patch([omega_c_min,omega_c_max,omega_c_max,omega_c_min],[-180+Mf,-180+Mf,-180,-1
 
 %Ho bisogno di un polo per il vincolo numero 1 (e_inf = 0)
 %Il guadagno statico resta libero: verrà modificato se necessario.
+%Aggiungo un altro polo perchè ho bisogno di più pendenza
 R_s = 1/s;
 G_e = R_s*G;
 
@@ -260,8 +262,10 @@ title("Bode di G e di G con regolatore statico");
 %%
 %--Progettazione della rete regolatrice dinamica--
 
-omega_c_star_ant = 125;
-Mf_ant = 70;
+%Prendo una omega nel range di attraversamento
+omega_c_star_ant = 900;
+%Richiedo un margine di fase maggiore per robustezza
+Mf_ant = Mf+1;
 
 %Ricavo i dati di attraversamento di G_e
 [Mag_G_e_omega_c_star_ant,phase_G_e_omega_c_star_ant,omega_c_star_ant]=bode(G_e, omega_c_star_ant);
@@ -273,12 +277,28 @@ tau_rete_ant = (M_star_ant-cos(phi_star_ant*pi/180))/(omega_c_star_ant*sin(phi_s
 tau_alpha_rete_ant = (cos(phi_star_ant*pi/180)-1/M_star_ant)/(omega_c_star_ant*sin(phi_star_ant*pi/180));
 alpha_rete_ant = tau_alpha_rete_ant/tau_rete_ant;
 
+%Checks
+%M_star_ant > 1, 0 < phi_star_ant < 90 gradi, 
+%cos(phi_star_ant*pi/180) > 1/M_star_ant
+
+if M_star_ant <= 1
+    error("M* <= 1 (%f)", M_star_ant);
+elseif phi_star_ant < 0
+    error("phi* < 0 (%f)", phi_star_ant);
+elseif phi_star_ant > 90
+    error("phi* > 90 (%f)", phi_star_ant);
+elseif cos(phi_star_ant*pi/180) <= 1/M_star_ant
+    error("cos(phi*) <= 1/M* (%f <= %f)", cos(phi_star_ant*pi/180), 1/M_star_ant);
+end
+
+
 %Ricavo il regolatore dinamico (anticipatore).
 R_d_ant = (1+s*tau_rete_ant)/(1+tau_alpha_rete_ant*s);
 
-%Stampo il grafico per vedere in che scenario siamo caduti.
 G_e_1 = R_d_ant * G_e;
 
+
+%Stampo il grafico per vedere in che scenario siamo caduti.
 %Ricavo i dati sulla G_e_1
 [mag_G_e_1,phase_G_e_1,omega_G_e_1]=bode(G_e_1,{omega_plot_min,omega_plot_max});
 
@@ -292,9 +312,9 @@ patch([omega_plot_min,omega_c_min,omega_c_min,omega_plot_min],[-200,-200,0,0],'r
 hold on;
 text(omega_plot_min*10,-100, sprintf('w_c^*>=%.2f rad/sec', omega_c_min));
 
-%Vincolo sulla omega_c_min opzionale
-hold on;
-patch([omega_c_min,omega_c_min_fac,omega_c_min_fac,omega_c_min],[-200,-200,0,0], [0.9100, 0.4100, 0.1700] ,'FaceAlpha',0.3,'EdgeAlpha',0); 
+% %Vincolo sulla omega_c_min opzionale
+% hold on;
+% patch([omega_c_min,omega_c_min_fac,omega_c_min_fac,omega_c_min],[-200,-200,0,0], [0.9100, 0.4100, 0.1700] ,'FaceAlpha',0.3,'EdgeAlpha',0); 
 
 %Vincolo sulla omega_c_max
 hold on;
@@ -344,17 +364,6 @@ zpk(G_e_1/(1+G_e_1))
 %--------------------------------------------------------------------------
 %Soluzione: modifico il guadagno.
 
-%Devo calcolare tre guadagni: il primo è il guadagno massimo per cui ho
-%rispettato il vincolo sulla misura, il secondo e il terzo riguardano le
-%specifiche dinamiche e vanno calcolati attraverso il luogo delle radici.
-%In particolare il primo e il secondo riguardano un massimo, mentre il
-%terzo riguarda un minimo.
-
-%In teoria ci sarebbe un quarto guadagno di minimo riguardo la
-%cancellazione del polo nell'orgine ma è trascurabile rispetto agli altri.
-
-%Calcoliamo il primo guadagno
-
 %Settare questa opzione per aggiungere un margine di attenuazione ulteriore
 %Si tratta di un offset negativo.
 mu_d_offset_db = 1;
@@ -369,58 +378,9 @@ mag_G_e_1_omega_n_db = 20*log10(mag_G_e_1_omega_n);
 mu_d_db=-B_n_db-mu_d_offset_db-mag_G_e_1_omega_n_db;
 mu_d_1 = 10^(mu_d_db/20);
 
-
-%Calcoliamo il secondo ed il terzo guadagno
-
-%Il secondo guadagno riguarda il guadagno massimo per cui le specifiche di
-%sovraelongazione vengano rispettate: in questo caso devo intersecare le
-%due semirette che rappresentano uno xi di 0.69 e i due poli che vanno ad
-%infinito, in quanto sono loro ad essere complessi coniugati.
-
-%Il terzo guadagno riguarda il guadagno minimo per cui le specifiche di
-%tempo di assestamento vengano rispettate: in questo caso mi devo
-%assicurare il il polo -3.333 superi l'asse T_axis_fac.
-
-%Faccio un plot del luogo delle radici per capire le specifiche. Inoltre
-%aggiungo gli assi di specifica T_a, mentre per la specifica S% attivo la
-%griglia che disegna automaticamente gli angoli e scelgo come range
-%[0.69,1] per rispettare la specifica di sovraelongazione <=5%.
-figure(4);
-rlocus(G_e_1);
-
-%Disegno l'asse T_axis
-hold on;
-plot([-T_axis, -T_axis],[-10, 10]);
-hold on;
-plot([-T_axis_fac, -T_axis_fac],[-10, 10]);
-
-legend("", "Vincolo T_a", "Vincolo T_a facoltativo");
-%Attivo la griglia.
-grid on;
-title("Luogo delle radici di Rd*Rs*G");
-
-%Osservando il luogo delle radici si notano due poli che tendono
-%ad infinito: dato che ho messo il polo della rete molto a sinistra di
-%T_axis_fac avrò di conseguenza un baricentro molto deviato a sinistra.
-
-%Mi basterà stare attento con il guadagno per evitare di aumentare troppo 
-%la sovraelongazione, ma allo stesso tempo ho un guadagno minimo 
-%per spostare di una quantità minima il polo a -3.333 oltre T_axis_fac.
-
-
-%Dal luogo delle radici di evidenziano i seguenti guadagni:
-mu_d_2 = 0.108;
-mu_d_3 = 0.0525;
-
-%Il guadagno minimo mu_d_3 (0.0525) viene rispettato sia da mu_d_2 (0.1080)
-%sia da mu_d_1 (0.0727)
-
-%In questo caso mu_d_1 è più stringente di mu_d_2.
 mu_d = mu_d_1;
 
 L = mu_d * G_e_1;
-L_plus_30 = mu_d * G_e_1_plus_30;
-L_minus_30 = mu_d * G_e_1_minus_30;
 
 %Plotto L
 figure(3);
@@ -433,13 +393,6 @@ grid on;
 title("Bode di G con i vari regolatori fino a L");
 
 %Il grafico sembra soddisfare le specifiche.
-
-%NOTA IMPORTANTE: sembrerebbe che dal grafico non vengano soddisfatte le
-%specifiche di tempo di assestamento facoltative. In realtà bisogna tenere
-%in conto la chiusura in retroazione di L:
-%il margine di fase nell'attraversamento assume un altro valore e di
-%conseguenza anche omega_c_min si sposta: andando a plottare i vincoli
-%sulla F si nota che viene rispettato anche questo vincolo.
 
 %Calcolo R
 R = mu_d * R_d_ant * R_s;
@@ -461,9 +414,6 @@ DenL = DenL{1,1};
 %Chiusura dei loop
 
 F=L/(1+L);
-%F con margini nella rete anticipatrice, guadagno non modificato.
-F_plus_30 = L_plus_30/(1+L_plus_30);
-F_minus_30 = L_minus_30/(1+L_minus_30);
 
 
 %Ricavo informazioni
@@ -479,6 +429,8 @@ title(sprintf("Risposta al gradino (W=%d) di L in anello chiuso", tab.W));
 legend("F");
 grid on;
 
+%Confronto la risposta a gradino con quella della closed loop di G.
+%Avevo già plottato in figura 1.
 
 %Per muovere il cursore:
 %datacursormode on
@@ -490,23 +442,8 @@ grid on;
 F_stepinfo = stepinfo(Y_F, T_F,'SettlingTimeThreshold',0.01);
 disp(F_stepinfo);
 
-%Dallo stepinfo abbiamo un Tempo di assestamento di 0.0321 sec e una
-%sovraelongazione percentuale dello 0%, valori al di sotto dei vincoli:
-%inoltre la specifica opzionale di tempo di assestamento è stata risolta.
-
-%Confronto la risposta a gradino con quella della closed loop di G.
-%Avevo già plottato in figura 1.
-
-figure(5);
-hold on;
-%Alla 5 aggiungo anche gli step di margine.
-step(F_plus_30, stepOption);
-hold on;
-step(F_minus_30, stepOption);
-
-title(sprintf("Risposta al gradino (W=%d) di L in anello chiuso", tab.W));
-legend("F", "F+30", "F-30");
-grid on;
+%Dallo stepinfo abbiamo un Tempo di assestamento di 0.2452 sec e una
+%sovraelongazione percentuale dello 1.23%, valori al di sotto dei vincoli
 
 %Rappresento con il diagramma di bode F e CG
 figure(6);
@@ -522,21 +459,19 @@ grid on;
 
 %Dal grafico si osserva che:
 %Il vincolo di misura viene rispettato: -30db circa in 1000 rad/s
-%Il vincolo di sovraelongazione viene rispettato: alla pulsazione di taglio
-%ho un valore di -70 gradi.
-%Non riesco a capire se il vincolo di tempo di assestamento viene
-%rispettato, lo verifico dalla risposta a gradino nel grafico precedente.
+%Il vincolo di sovraelongazione viene rispettato: quasi 90 gradi di Mf.
+%Vincolo di tempo di assestamento rispettato.
 %L'errore a regime è nullo, sempre verificato dal grafico precedente.
 
 %%
 %CONCLUSIONI
 
 %Specifiche F:
-%Tempo assestamento: 0.0321 sec
-%Sovraelongazione percentuale: 0%
+%Tempo assestamento: 0.2452 sec
+%Sovraelongazione percentuale: 1.23%
 %Attenuazione errore di misura: 30db
 %Errore e_inf = 0
-%Margine di fase: 70 gradi
+%Margine di fase: >85 gradi
 
 %Specifiche G in anello chiuso:
 %Tempo assestamento: 0.000515 sec
@@ -556,7 +491,7 @@ grid on;
 %PROVA IN SIMULINK
 %open('progetto_simulink_new.slx')
 
-%Il regolatore sul sistema linearizzato risponde in modo impeccabile
+%Il regolatore sul sistema linearizzato risponde come progettato.
 %Il regolatore sul sistema non lineare funziona piuttosto bene in un
 %intorno della coppia di equilibrio.
 

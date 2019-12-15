@@ -61,14 +61,14 @@ Il sistema modella la pressione sul fondo del bacino come costante, mentre la va
     \item Valvola di controllo ($-C_d u x_2 |x_2|$): Consiste in una valvola che se opportunamente controllata permette di aumentare l'effetto di perdita di carico nella condotta. L'effetto della valvola è condizionata dalla portata attuale.
 \end{itemize}
 
-L'uscita $y=-\eta x_1 x_2$ rappresenta la potenza elettrica generata dall'impianto. Viene calcolata come la potenza fluidica $x_1 x_2$ e moltiplicata per un coefficiente che indica l'efficienza di conversione tra energia meccanica e energia elettrica. Il segno negativo è dovuto al trasduttore utilizzato.
+L'uscita $y=-\eta x_1 x_2$ rappresenta la potenza elettrica generata dall'impianto. Viene calcolata come la potenza fluidica $x_1 x_2$ e moltiplicata per un coefficiente che indica l'efficienza di conversione tra energia meccanica e energia elettrica. Il segno negativo è dovuto al trasduttore utilizzato: per esempio se generiamo 1MW di potenza, avremmo in lettura dal sensore -1MW. Aprendo o chiudendo la valvola possiamo cambiare la potenza in uscita.
 
 %TODO: nota sul gradino negativo necessario per la logica negativa del sistema
 
 \subsection{Progettazione fisica del controllo}
 
 Ragionando in termini di progettazione reale, il segnale ricevuto dal trasduttore di potenza sarà di tipo elettrico, il quale verrà campionato da un circuito elettronico, realizzato mediante la rete regolatrice da noi progettata. 
-Infine anche il segnale di controllo sarà di natura elettrica, quindi necessitiamo di un attuatore, per esempio un motore elettrico o un solenoide, magari con circuiteria aggiuntiva di potenza e di un sistema meccanico per l'interfacciamento valvola-motore, per controllare la valvola, oppure sostituire una valvola con una elettro-valvola, avente attuatore già incluso.
+Infine anche il segnale di controllo sarà di natura elettrica, quindi necessitiamo di un attuatore, per esempio un motore elettrico o un solenoide, magari con circuiteria aggiuntiva di potenza e di un sistema meccanico per l'interfacciamento valvola-motore, per controllare la valvola, oppure si potrebbe sostituire la valvola con una elettro-valvola, avente attuatore già incluso.
 
 \section{Specifiche}
 
@@ -167,7 +167,7 @@ Osservando il diagramma di Bode della fase deduciamo che siamo caduti in uno sce
 Per ovviare allo scenario B, abbiamo bisogno di un regolatore dinamico formato da una rete anticipatrice.
 
 $$
-R_d(S)=\frac{1+\tau s}{1+\tau \alpha s}
+R_d(s)=\frac{1+\tau s}{1+\tau \alpha s}
 $$
 
 Il polo presente della rete anticipatrice è dovuto alla fisica realizzabilità della rete.
@@ -175,12 +175,24 @@ Il polo presente della rete anticipatrice è dovuto alla fisica realizzabilità 
 Rimane il problema di dove porre lo zero e il polo nel piano complesso:
 \begin{itemize}
     \item Lo zero deve fornire un aumento di fase tale da superare il vincolo del margine di fase in almeno una parte del range di attraversamento
-    \item Il polo deve essere collocato in alta frequenza (molto lontano dall'asse degli immaginari) per non disturbare l'effetto dello zero.
+    \item Il polo deve essere collocato in alta frequenza (lontano dall'asse degli immaginari) per non disturbare l'effetto dello zero.
 \end{itemize}
 
-Potremmo utilizzare le formule di inversione per calcolare $\alpha$ e $\tau$. In questo caso abbiamo preferito l'utilizzo del luogo delle radici per il rispetto dei vincoli di sovraelongazione e di tempo di assestamento, mentre abbiamo osservato il diagramma di Bode della funzione di trasferimento $G_e = R_s * G$ per calcolare il guadagno necessario per soddisfare il vincolo sull'attenuazione di misura.
+Invece che utilizzare le formule di inversione, abbiamo preferito progettare la rete per cancellazione: in questo modo riusciamo a ricondurre il sistema ad uno equivalente del primo ordine, a meno di una coda di assestamento dovuta ad una incertezza di posizionamento dello zero rispetto al polo del sistema in -3.333:
 
-\subsection{Attenuazione necessaria per il rumore di misura}
+$$
+\begin{array}{lll}
+    R_d(s) = \frac{(s+3.333)}{(s+333.3)} &\alpha=0.01 & \tau=\frac{1}{3.333}
+\end{array}
+$$
+
+Tecnicamente il polo della rete anticipatrice non dovrebbe superare la pulsazione di attraversamento, altrimenti non possiamo disegnare il vincolo di attraversamento minimo nel diagramma di Bode, in quanto la pulsazione di attraversamento non corrisponderebbe e la condizione $\omega_n\approx\omega_c$ non sarà valida. Utilizzando il luogo delle radici per imporre il vincolo di attraversamento minimo, il quale non è altro che la specifica di tempo di assestamento, unito al fatto che durante i test abbiamo constatato che la pulsazione di attraversamento non varia di molto, possiamo trascurare questo vincolo.
+
+\subsection{Calcolo di $\mu_d$ per il rispetto dei vincoli}
+
+Per calcolare i vincoli di sovraelongazione e di tempo di assestamento abbiamo utilizzato il luogo delle radici, dato che il guadagno statico era libero. Mentre per calcolare il guadagno statico neccessario per il vincolo sull'attenuazione dei rumori di misura abbiamo utilizzato il diagramma di Bode.
+
+\subsubsection{Attenuazione necessaria per il rumore di misura}
 
 Utilizzando le funzioni di Matlab e il diagramma di Bode, abbiamo calcolato il valore massimo di $\mu_d$, ancora libero in quanto non usato nel regolatore statico, per rispettare il vincolo di attenuazione di misura.
 
@@ -188,7 +200,9 @@ $$
     \mu_{d_B}=0.073446254984543
 $$
 
-\subsection{Vincolo di $\mu_d$ per la specifica di sovraelongazione}
+\newpage
+
+\subsubsection{Vincolo di $\mu_d$ per la specifica di sovraelongazione}
 
 Utilizzando il luogo delle radici siamo riusciti a calcolare il valore \textbf{massimo} di $\mu_d$ per rispettare il vincolo di sovraelongazione.
 
@@ -204,7 +218,7 @@ $$
 
 Che risulta meno stringente rispetto al vincolo $\mu_{d_B}$.
 
-\subsection{Vincolo di $\mu_d$ per il tempo di assestamento}
+\subsubsection{Vincolo di $\mu_d$ per il tempo di assestamento}
 
 Un ultimo vincolo del guadagno è dato dal tempo di assestamento, il quale si traduce in un asse parallelo all'asse degli immaginari. Ciò comporta un valore \textbf{minimo} che il guadagno deve rispettare.\\
 
@@ -214,7 +228,9 @@ $$
     \mu_{d_T} = 0.0498
 $$
 
-\subsection{Selezione di $\mu_d$}
+\newpage
+
+\subsubsection{Selezione di $\mu_d$}
 
 In conclusione abbiamo preso un guadagno $\mu_d$ tale che rispetti i vincoli $\mu_{d_B}$, $\mu_{d_S}$, $\mu_{d_T}$:
 
@@ -228,11 +244,23 @@ $$
 
 Abbiamo scelto $\mu_{d_B}$ come guadagno, in quanto rispetta i vincoli.
 
-%TODO: aggiornare figura 3 levando il vincolo arancione
 
 \begin{center}
-    \includegraphics[scale=0.6]{figure3.eps}
+    \includegraphics[scale=0.8]{figure3.eps}
 \end{center}
+
+Dal diagramma di bode si può notare il rispetto del vincolo di attenuazione di misura e il rispetto del margine di fase, già visto nel luogo delle radici.
+
+\section{Funzione ad anello aperto e di sensitività}
+
+$$
+\begin{array}{cc}
+    L_{+20\%}(s)=\frac{31315 s (s+4)}{s^2 (s+333.3) (s+3.333)} & F_{+20\%}(s)=\frac{31315 s^3 (s+333.3) (s+4) (s+3.333)}{s^3 (s+333.3) (s+4.029) (s+3.333) (s^2 + 332.6s + 31090)}
+\end{array}
+$$
+
+Possiamo approssimare $F(s)$ ad un sistema del secondo ordine con poli complessi coniugati dominanti per effetto delle cancellazioni. La quasi cancellazione porterà una coda di assestamento, che potrebbe influire negativamente.
+
 
 \newpage
 
@@ -240,12 +268,9 @@ Abbiamo scelto $\mu_{d_B}$ come guadagno, in quanto rispetta i vincoli.
 
 \subsection{Verifica delle performance sul sistema linearizzato}
 
-Una volta ottenuto il regolatore, abbiamo imposto la retroazione:
+Una volta ottenuto la funzione ad anello aperto, abbiamo imposto la retroazione:
 $$
-    \begin{array}{lcl}
-        F & = & \frac{L}{1+L} \\
-        L & = & \mu_d * R_d * R_s * G
-    \end{array}
+F = \frac{L}{1+L}
 $$
 
 \subsubsection{Verifica di $e_\infty=0$, $S\%$, $T_{a_0}$, $M_f$}
@@ -254,13 +279,13 @@ $$
     \includegraphics[scale=0.7]{figure5.eps}
 \end{center}
 
-Si può notare l'aggiunta delle risposte al gradino con le incertezze sulla rete anticipatrice fino al 40\%. L'aumento della sovraelongazione per F-40\% è dovuta allo spostamento dello zero, il quale influisce sulla posizione dei poli c.c.\\
+Si può notare l'aggiunta delle risposte al gradino con le incertezze sulla rete anticipatrice fino al 20\%. L'aumento della sovraelongazione per F$\pm20\%$ è dovuta allo spostamento dello zero. Si ricorda che l'incertezza sullo zero induce una \textbf{correzione sul guadagno}.\\
 
-Abbiamo testato la rete mediante \texttt{stepinfo}, impostando il gradino avente ampiezza $W$, mediante comando \texttt{StepAmplitude} e rilevazione del tempo di assestamento all'1\% mediante comando \texttt{SettlingTimeThreshold}. Testiamo la rete con l'incertezza al 40\%:
+Abbiamo testato la rete mediante \texttt{stepinfo}, impostando il gradino avente ampiezza $W$, mediante comando \texttt{StepAmplitude} e rilevazione del tempo di assestamento all'1\% mediante comando \texttt{SettlingTimeThreshold}:
 
 \begin{itemize}
-    \item \textbf{SettlingTime}: 0.0299 sec
-    \item \textbf{Overshoot}: 4.1693 \%
+    \item \textbf{SettlingTime}: 0.0321 sec
+    \item \textbf{Overshoot}: 0 \%
 \end{itemize}
 
 Di conseguenza le specifiche di tempo di assestamento, margine di fase e di sovraelongazione sono rispettate. Guardando il grafico di step, la specifica $e_\infty=0$ sembra rispettata. 
@@ -312,7 +337,7 @@ Se volessimo che la valvola aumenti soltanto le perdite, dovremmo imporre $u\geq
 
 \section{Conclusioni}
 
-Il sistema linearizzato è stato correttamente regolato in base alle specifiche date, tenendo in conto anche della specifica facoltativa $T_{a_0}$. Inoltre abbiamo analizzato il sistema mediante gradino.\\
+Il sistema linearizzato è stato correttamente regolato in base alle specifiche date, tenendo in conto anche della specifica facoltativa $T_{a_0}$. Inoltre abbiamo analizzato il sistema mediante gradino. L'incertezza sullo zero della rete anticipatrice induce una correzione del guadagno a \textit{run-time}.\\
 
 Il sistema non lineare si comporta differentemente, a seconda del segno dell'ampiezza del gradino all'ingresso. Ciò è causato dalla logica negativa del sensore e da effetti non lineari, non presenti nel sistema linearizzato.
 
