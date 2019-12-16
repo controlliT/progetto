@@ -56,9 +56,9 @@ Anche la $y$ è di tipo non lineare.
 Il sistema modella la pressione sul fondo del bacino come costante, mentre la variazione nel tempo della portata nel fondo del bacino dipende da tre fattori:
 
 \begin{itemize}
-    \item Pressione sul fondo del bacino ($x_1$): Una pressione positiva contribuisce ad aumentare la portata nel fondo del bacino
-    \item Perdite di carico nella condotta ($-R_0 x_2 |x_2|$): Si tratta dell'attrito tra la condotta e l'acqua, che contribuisce a diminuire la portata
-    \item Valvola di controllo ($-C_d u x_2 |x_2|$): Consiste in una valvola che se opportunamente controllata permette di aumentare l'effetto di perdita di carico nella condotta. L'effetto della valvola è condizionata dalla portata attuale.
+    \item Pressione sul fondo del bacino $x_1$: Una pressione positiva contribuisce ad aumentare la portata nel fondo del bacino
+    \item Perdite di carico nella condotta $-R_0 x_2 |x_2|$: Si tratta dell'attrito tra la condotta e l'acqua, che contribuisce a diminuire la portata
+    \item Valvola di controllo $-C_d u x_2 |x_2|$: Consiste in una valvola che se opportunamente controllata permette di aumentare l'effetto di perdita di carico nella condotta. L'effetto della valvola è condizionata dalla portata attuale.
 \end{itemize}
 
 L'uscita $y=-\eta x_1 x_2$ rappresenta la potenza elettrica generata dall'impianto. Viene calcolata come la potenza fluidica $x_1 x_2$ e moltiplicata per un coefficiente che indica l'efficienza di conversione tra energia meccanica e energia elettrica. Il segno negativo è dovuto al trasduttore utilizzato: per esempio se generiamo 1MW di potenza, avremmo in lettura dal sensore -1MW. Aprendo o chiudendo la valvola possiamo cambiare la potenza in uscita.
@@ -67,7 +67,7 @@ L'uscita $y=-\eta x_1 x_2$ rappresenta la potenza elettrica generata dall'impian
 
 \subsection{Progettazione fisica del controllo}
 
-Ragionando in termini di progettazione reale, il segnale ricevuto dal trasduttore di potenza sarà di tipo elettrico, il quale verrà campionato da un circuito elettronico, realizzato mediante la rete regolatrice da noi progettata. 
+Ragionando in termini di progettazione reale, il segnale ricevuto dal trasduttore di potenza sarà di tipo elettrico, il quale verrà elaborato da un circuito elettronico analogico/digitale, realizzato secondo la rete regolatrice da noi progettata. 
 Infine anche il segnale di controllo sarà di natura elettrica, quindi necessitiamo di un attuatore, per esempio un motore elettrico o un solenoide, magari con circuiteria aggiuntiva di potenza e di un sistema meccanico per l'interfacciamento valvola-motore, per controllare la valvola, oppure si potrebbe sostituire la valvola con una elettro-valvola, avente attuatore già incluso.
 
 \section{Specifiche}
@@ -130,7 +130,7 @@ Dalla figura possiamo evidenziare le sequenti performance:
 
 \begin{itemize}
     \item Tempo di assestamento all'1\% molto basso, minore di 0.01 sec
-    \item Sovraelongazione percentuale inferiore al 5%
+    \item Sovraelongazione percentuale inferiore al 5\%
 \end{itemize}
 
 Il sistema però non soddisfa alcune caratteristiche richeste:
@@ -178,7 +178,7 @@ Rimane il problema di dove porre lo zero e il polo nel piano complesso:
     \item Il polo deve essere collocato in alta frequenza (lontano dall'asse degli immaginari) per non disturbare l'effetto dello zero.
 \end{itemize}
 
-Invece che utilizzare le formule di inversione, abbiamo preferito progettare la rete per cancellazione: in questo modo riusciamo a ricondurre il sistema ad uno equivalente del primo ordine, a meno di una coda di assestamento dovuta ad una incertezza di posizionamento dello zero rispetto al polo del sistema in -3.333:
+Invece che utilizzare le formule di inversione, abbiamo preferito progettare la rete per \textbf{cancellazione}: in questo modo riusciamo a ricondurre il sistema ad uno equivalente del primo ordine, a meno di una coda di assestamento dovuta ad una incertezza di posizionamento dello zero rispetto al polo del sistema in -3.333:
 
 $$
 \begin{array}{lll}
@@ -186,7 +186,9 @@ $$
 \end{array}
 $$
 
-Tecnicamente il polo della rete anticipatrice non dovrebbe superare la pulsazione di attraversamento, altrimenti non possiamo disegnare il vincolo di attraversamento minimo nel diagramma di Bode, in quanto la pulsazione di attraversamento non corrisponderebbe e la condizione $\omega_n\approx\omega_c$ non sarà valida. Utilizzando il luogo delle radici per imporre il vincolo di attraversamento minimo, il quale non è altro che la specifica di tempo di assestamento, unito al fatto che durante i test abbiamo constatato che la pulsazione di attraversamento non varia di molto, possiamo trascurare questo vincolo.
+Tecnicamente il polo della rete anticipatrice non dovrebbe superare la pulsazione di attraversamento, altrimenti non potremmo disegnare il vincolo di attraversamento minimo nel diagramma di Bode, in quanto la pulsazione di attraversamento non corrisponderebbe e la condizione $\omega_n\approx\omega_c$ non sarà valida.\\
+
+Utilizzando il luogo delle radici per imporre il vincolo di attraversamento minimo, il quale non è altro che la specifica di tempo di assestamento, unito al fatto che durante i test abbiamo constatato che la pulsazione di attraversamento non varia di molto, possiamo trascurare questo vincolo.
 
 \subsection{Calcolo di $\mu_d$ per il rispetto dei vincoli}
 
@@ -197,7 +199,7 @@ Per calcolare i vincoli di sovraelongazione e di tempo di assestamento abbiamo u
 Utilizzando le funzioni di Matlab e il diagramma di Bode, abbiamo calcolato il valore massimo di $\mu_d$, ancora libero in quanto non usato nel regolatore statico, per rispettare il vincolo di attenuazione di misura.
 
 $$
-    \mu_{d_B}=0.073446254984543
+    \mu_{d_B}=0.0734
 $$
 
 \newpage
@@ -333,7 +335,7 @@ Se ripetiamo il test con $-W$, dopo un breve transitorio, non previsto nel siste
 Il risultato va preso con le pinze, in quanto abbiamo che la valvola, invece che aumentare le perdite di carico, le \textbf{riduce}.
 
 \subsubsection{Nota sulla fisica realizzabilità}
-Se volessimo che la valvola aumenti soltanto le perdite, dovremmo imporre $u\geq0$ e forti vincoli sulla potenza massima generata dal sistema ($W$), come ci aspetteremmo da un impianto idroelettrico reale.
+Se volessimo che la valvola aumenti soltanto le perdite, dovremmo imporre $1\geq u \geq0$ e forti vincoli sulla potenza massima generata dal sistema ($W$), come ci aspetteremmo da un impianto idroelettrico reale.
 
 \section{Conclusioni}
 
@@ -342,3 +344,4 @@ Il sistema linearizzato è stato correttamente regolato in base alle specifiche 
 Il sistema non lineare si comporta differentemente, a seconda del segno dell'ampiezza del gradino all'ingresso. Ciò è causato dalla logica negativa del sensore e da effetti non lineari, non presenti nel sistema linearizzato.
 
 \end{document}
+
