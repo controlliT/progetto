@@ -83,6 +83,8 @@ xi=sqrt(log(s_perc)^2/(pi^2+log(s_perc)^2)); %0.6901
 
 %PROCEDIMENTO: calcolo xi con la formula inversa, poi calcolo il Mf e
 %valuto la condizione più restrittiva
+%Si tratta di una approssimazione che funziona solo se ho forti ipotesi su
+%poli complessi coniugati dominanti etc.
 Mf_s_perc=xi*100; %69.01 
 
 %Mf>69.01 gradi richiesta più limitatnte delle specifiche (Mf>45 gradi).
@@ -92,11 +94,13 @@ Mf = Mf_s_perc;
 %460/(Mf* T*) cioè 460/(45 * 0.3)
 %Questo limite inferiore è dettato dal tempo di assestamento.
 
-%Riguarda la coppia di poli dominanti.
+%Posso tracciare il vincolo di attraversamento minimo solo se ho forti
+%ipotesi su poli complessi coniugati dominanti etc.
 omega_c_min = 460/(Mf * tab.T_a_1); 
 
 %Calcolo la frequenza di attraversamento minima opzionale:
-%Riguarda la coppia di poli dominanti.
+%Posso tracciare il vincolo di attraversamento minimo solo se ho forti
+%ipotesi su poli complessi coniugati dominanti etc.
 omega_c_min_fac = 460/(Mf * tab.T_a_0); 
 
 %Calcolo anche l'asse di specifica del tempo di assestamento all'1%
@@ -369,12 +373,14 @@ title("Bode di G con i vari regolatori");
 %Il margine di fase può essere recuperato:
 %Siamo caduti in uno scenario A.
 
+%--------------------------------------------------------------------------
 %COSA SUCCEDE IN ANELLO APERTO:
 zpk(G_e_1)
-%Il polo -3.333 viene cancellato con lo zero della rete (20% di scarto con
-%relativa coda di assestamento), mentre il polo della rete è trascurabile.
+%Il polo -3.333 viene cancellato con lo zero della rete (20% di scarto)),
+%mentre il polo della rete è trascurabile.
+
 %Rimane il polo nell'origine. Se collegassi G_e_1 in anello aperto
-%funzionerebbe come integratore, almeno per frequenze basse.
+%funzionerebbe come integratore, con una pendenza particolare.
 
 %COSA SUCCEDE IN ANELLO CHIUSO (G_e_1/(1+G_e_1)): 
 zpk(G_e_1/(1+G_e_1))
@@ -382,7 +388,8 @@ zpk(G_e_1/(1+G_e_1))
 %guadagno molto elevato.
 
 %--------------------------------------------------------------------------
-%Soluzione: modifico il guadagno.
+
+%Soluzione per lo scenario A: modifico il guadagno.
 
 %Devo calcolare tre guadagni: il primo è il guadagno massimo per cui ho
 %rispettato il vincolo sulla misura, il secondo e il terzo riguardano le

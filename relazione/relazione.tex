@@ -90,7 +90,7 @@ Si aggiungono delle opzioni facoltative:
 
 \section{Linearizzazione del sistema}
 
-Per prima cosa linearizziamo il sistema idroelettrico in un sistema lineare. Per fare ciò utilizziamo la coppia di equilibrio fornita $x=(10,6), u=(\frac{\frac{x_1}{x_2 |x_2|}-R_0}{C_d})$:
+Per prima cosa linearizziamo il sistema idroelettrico. Per fare ciò utilizziamo la coppia di equilibrio fornita $x=(10,6), u=(\frac{\frac{x_1}{x_2 |x_2|}-R_0}{C_d})$:
 
 Mediante la linearizzazione troviamo le quattro matrici $A,B,C,D$:
 
@@ -136,7 +136,7 @@ Dalla figura possiamo evidenziare le sequenti performance:
 Il sistema però non soddisfa alcune caratteristiche richeste:
 
 \begin{itemize}
-    \item Errore a regime non nullo (ma comunque basso visto l'alto guadagno del sistema in anello aperto)
+    \item Errore a regime non nullo (ma comunque basso visto l'alto guadagno statico)
     \item Attenuazione del rumore di misura quasi nullo
 \end{itemize}
 
@@ -186,9 +186,9 @@ $$
 \end{array}
 $$
 
-Tecnicamente il polo della rete anticipatrice non dovrebbe superare la pulsazione di attraversamento, altrimenti non potremmo disegnare il vincolo di attraversamento minimo nel diagramma di Bode, in quanto la pulsazione di attraversamento non corrisponderebbe e la condizione $\omega_n\approx\omega_c$ non sarà valida.\\
+Tecnicamente il polo della rete anticipatrice non dovrebbe superare la pulsazione di attraversamento, altrimenti non potremmo disegnare i vincoli di attraversamento in modo preciso, nel diagramma di Bode, in quanto la pulsazione di attraversamento non corrisponderebbe e la condizione $\omega_n\approx\omega_c$ non sarà valida.\\
 
-Utilizzando il luogo delle radici per imporre il vincolo di attraversamento minimo, il quale non è altro che la specifica di tempo di assestamento, unito al fatto che durante i test abbiamo constatato che la pulsazione di attraversamento non varia di molto, possiamo trascurare questo vincolo.
+Utilizzando il luogo delle radici per imporre il vincolo di attraversamento minimo, il quale non è altro che la specifica di tempo di assestamento, unito al fatto che durante i test abbiamo constatato che la pulsazione di attraversamento non varia di molto, possiamo trascurare questo problema.
 
 \subsection{Calcolo di $\mu_d$ per il rispetto dei vincoli}
 
@@ -199,7 +199,7 @@ Per calcolare i vincoli di sovraelongazione e di tempo di assestamento abbiamo u
 Utilizzando le funzioni di Matlab e il diagramma di Bode, abbiamo calcolato il valore massimo di $\mu_d$, ancora libero in quanto non usato nel regolatore statico, per rispettare il vincolo di attenuazione di misura.
 
 $$
-    \mu_{d_B}=0.0734
+    \mu_{d_B}=0.0735
 $$
 
 \newpage
@@ -335,7 +335,7 @@ Se ripetiamo il test con $-W$, dopo un breve transitorio, non previsto nel siste
 Il risultato va preso con le pinze, in quanto abbiamo che la valvola, invece che aumentare le perdite di carico, le \textbf{riduce}.
 
 \subsubsection{Nota sulla fisica realizzabilità}
-Se volessimo che la valvola aumenti soltanto le perdite, dovremmo imporre $1\geq u \geq0$ e forti vincoli sulla potenza massima generata dal sistema ($W$), come ci aspetteremmo da un impianto idroelettrico reale.
+Se volessimo che la valvola aumenti soltanto le perdite, dovremmo imporre $u\leq1$ (apertura massima), $u\geq0$ (chiusura) e forti vincoli sulla potenza minima/massima generata dal sistema ($W$), come ci aspetteremmo da un impianto idroelettrico reale.
 
 \section{Conclusioni}
 
@@ -344,4 +344,3 @@ Il sistema linearizzato è stato correttamente regolato in base alle specifiche 
 Il sistema non lineare si comporta differentemente, a seconda del segno dell'ampiezza del gradino all'ingresso. Ciò è causato dalla logica negativa del sensore e da effetti non lineari, non presenti nel sistema linearizzato.
 
 \end{document}
-
